@@ -1,0 +1,3978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #a0a0a0;
+      --primary-dark: #606060;
+      --primary-light: #c0c0c0;
+      --accent-color: #4a90e2;
+      --accent-dark: #3a7bc8;
+      --accent-light: #5aa3f0;
+      --secondary-color: #8b5cf6;
+      --secondary-dark: #7c3aed;
+      --secondary-light: #a78bfa;
+      --error-color: #ef4444;
+      --success-color: #10b981;
+      --bg-dark: #000000;
+      --bg-darker: #000000;
+      --bg-medium: #0a0a0a;
+      --bg-light: #141414;
+      --bg-card: #0a0a0a;
+      --border-color: #1a1a1a;
+      --border-light: #2a2a2a;
+      --text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      --glow-color: rgba(74, 144, 226, 0.15);
+      --accent-glow: rgba(74, 144, 226, 0.25);
+      --particle-color: rgba(74, 144, 226, 0.3);
+    }
+
+    /* Terminal Green Theme */
+    body.terminal-theme {
+      --primary-color: #00ff00;
+      --primary-dark: #00aa00;
+      --primary-light: #66ff66;
+      --accent-color: #00ff00;
+      --accent-dark: #00cc00;
+      --accent-light: #33ff33;
+      --bg-dark: #000000;
+      --bg-darker: #000000;
+      --bg-medium: #0a0a0a;
+      --bg-light: #0d0d0d;
+      --bg-card: #050505;
+      --border-color: #003300;
+      --border-light: #005500;
+      --text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      --glow-color: rgba(0, 255, 0, 0.2);
+      --accent-glow: rgba(0, 255, 0, 0.3);
+      --particle-color: rgba(0, 255, 0, 0.4);
+    }
+
+    /* Pastel Pink Theme */
+    body.pastel-theme {
+      --primary-color: #d4a5d4;
+      --primary-dark: #b88ab8;
+      --primary-light: #e6c4e6;
+      --accent-color: #ff9ed4;
+      --accent-dark: #ff7ac4;
+      --accent-light: #ffc2e6;
+      --bg-dark: #1a0f1a;
+      --bg-darker: #0f0a0f;
+      --bg-medium: #1f141f;
+      --bg-light: #2a1f2a;
+      --bg-card: #1a0f1a;
+      --border-color: #3d2a3d;
+      --border-light: #4d3a4d;
+      --text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      --glow-color: rgba(255, 158, 212, 0.2);
+      --accent-glow: rgba(255, 158, 212, 0.3);
+      --particle-color: rgba(255, 158, 212, 0.5);
+    }
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #000000;
+      color: var(--primary-color);
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.3s ease;
+      font-size: 14px;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    /* Terminal Green Theme - Dark green with scanlines */
+    body.terminal-theme {
+      background: #000000;
+      position: relative;
+    }
+
+    /* Scanlines container - background layer */
+    #scanlinesBackground {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    /* Scanlines container - content overlay */
+    #scanlinesOverlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      overflow: hidden;
+    }
+
+    .scanline {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: rgba(0, 255, 0, 1);
+      box-shadow: 0 0 3px rgba(0, 255, 0, 0.5);
+    }
+
+    /* Pastel Pink Theme - Soft pink glow */
+    body.pastel-theme {
+      background: radial-gradient(ellipse at center, #1a0f1a 0%, #0f0a0f 100%);
+    }
+
+    /* Sleek theme mouse gradient */
+    #mouseGradient {
+      position: fixed;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(74, 144, 226, 0.18) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Pink particle container */
+    #pinkParticles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0;
+    }
+    body.pastel-theme #pinkParticles {
+      opacity: 1;
+    }
+    .pink-particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 158, 212, 0.8) 0%, rgba(255, 158, 212, 0.2) 70%, transparent 100%);
+      box-shadow: 0 0 15px rgba(255, 158, 212, 0.6);
+      animation: floatParticle linear infinite;
+    }
+    @keyframes floatParticle {
+      0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100vh) translateX(var(--drift));
+        opacity: 0;
+      }
+    }
+    .window {
+      max-width: 1440px;
+      margin: 0 auto;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      padding: 24px;
+      border-radius: 16px;
+      animation: fadeIn 0.6s ease-out;
+      backdrop-filter: blur(10px);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .title-bar {
+      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-medium) 100%);
+      color: var(--primary-color);
+      padding: 16px 20px;
+      margin: -24px -24px 20px;
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 20px;
+      border-bottom: 1px solid var(--border-color);
+      letter-spacing: 0.5px;
+    }
+    .theme-toggle, button {
+      background: var(--bg-light);
+      border: 1px solid var(--border-light);
+      color: var(--primary-color);
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      font-size: 13px;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+    }
+    .theme-toggle::before, button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+      transition: left 0.5s ease;
+    }
+    .theme-toggle:hover::before, button:hover::before {
+      left: 100%;
+    }
+    .theme-toggle:hover, button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--accent-glow);
+      background: var(--bg-medium);
+      border-color: var(--accent-color);
+    }
+    .theme-toggle:active, button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px var(--accent-glow);
+    }
+    button:disabled {
+      border-color: var(--border-color);
+      color: var(--primary-dark);
+      cursor: not-allowed;
+      opacity: 0.5;
+      transform: none;
+    }
+    button:disabled:hover {
+      box-shadow: none;
+      background: var(--bg-light);
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+      position: relative;
+    }
+    .sidebar, .main, .metadata-section {
+      background: linear-gradient(
+        to bottom,
+        rgba(10, 10, 10, 0.95) 0%,
+        rgba(10, 10, 10, 0.6) 50%,
+        rgba(10, 10, 10, 0.3) 100%
+      );
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: slideIn 0.5s ease-out;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .sidebar:hover, .main:hover, .metadata-section:hover {
+      border-color: var(--border-light);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .sidebar { flex: 1; max-width: 320px; }
+    .main { flex: 3; display: flex; flex-direction: column; gap: 20px; }
+    .preview-section { display: flex; gap: 20px; }
+    .preview-canvas { flex: 1; }
+    .metadata-section {
+      flex: 1;
+      max-width: 320px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+    }
+    .metadata-section::-webkit-scrollbar {
+      width: 6px;
+    }
+    .metadata-section::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+      border-radius: 3px;
+    }
+    .metadata-section::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+    .metadata-section::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-color);
+    }
+    .preview-buttons { display: flex; gap: 12px; }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 12px;
+    }
+    .gallery-item {
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--bg-light);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: popIn 0.35s ease-out;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .gallery-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--accent-color);
+      border-color: var(--accent-color);
+    }
+    .gallery-item img { width: 100%; height: 100px; object-fit: contain; }
+    .gallery-item.dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+    .gallery-item.drag-over {
+      border: 2px dashed var(--accent-color);
+      background: var(--glow-color);
+    }
+    .gallery-item-number {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(0, 0, 0, 0.8);
+      color: var(--primary-color);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      z-index: 10;
+    }
+    .gallery-item {
+      position: relative;
+    }
+    .filter-trait-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .filter-trait-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filter-trait-label {
+      font-size: 10px;
+      color: var(--primary-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .filter-trait-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .filter-tag {
+      background: var(--bg-light);
+      border: 1px solid var(--border-light);
+      color: var(--primary-color);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .filter-tag:hover {
+      border-color: var(--accent-color);
+      background: var(--bg-medium);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+    .filter-tag.active {
+      background: var(--accent-color);
+      color: #fff;
+      border-color: var(--accent-light);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .filter-tag .count {
+      opacity: 0.7;
+      margin-left: 4px;
+      font-size: 9px;
+    }
+    .filter-controls {
+      display: flex;
+      gap: 8px;
+    }
+    .filter-controls button {
+      padding: 8px 12px;
+      font-size: 11px;
+    }
+    .gallery-stats {
+      font-size: 11px;
+      color: var(--primary-dark);
+      text-align: right;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 650px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      animation: modalFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header { display: flex; justify-content: flex-end; margin-bottom: 15px; gap: 8px; }
+    .modal-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .modal-counter { font-size: 11px; text-shadow: var(--text-shadow); }
+    .modal-content img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+      margin-bottom: 15px;
+      transition: opacity 0.3s;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+    }
+    .modal-content img.fade { opacity: 0; }
+    .trait-list, .trait-editor {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .trait-list div {
+      background: var(--bg-medium);
+      padding: 6px 10px;
+      border: 1px solid var(--primary-color);
+      border-radius: 6px;
+      font-size: 10px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .trait-list div:hover {
+      background: var(--bg-light);
+      box-shadow: 0 0 10px var(--glow-color);
+    }
+    .trait-editor div { display: flex; flex-direction: column; }
+    .trait-editor label { font-size: 10px; margin-bottom: 3px; }
+    .trait-editor select { padding: 4px; font-size: 10px; }
+    .duplicate-warning {
+      color: var(--error-color);
+      font-size: 10px;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+      text-shadow: 0 0 8px var(--error-color);
+    }
+    .duplicate-warning.show { display: block; }
+    .nft-name {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-shadow: var(--text-shadow);
+    }
+    .close-modal, .download-nft, .delete-button {
+      border: 2px solid var(--error-color);
+      color: var(--error-color);
+      padding: 6px 10px;
+      font-size: 10px;
+    }
+    .close-modal:hover, .download-nft:hover, .delete-button:hover {
+      background: var(--error-color);
+      color: #fff;
+      box-shadow: 0 0 15px var(--error-color);
+    }
+    .download-nft { border-color: var(--primary-color); color: var(--primary-color); }
+    .download-nft:hover { background: var(--bg-light); border-color: var(--primary-light); }
+    .replace-one {
+      border: 2px solid var(--secondary-color);
+      color: var(--secondary-color);
+      padding: 6px 10px;
+      font-size: 10px;
+    }
+    .replace-one:hover {
+      background: var(--secondary-color);
+      color: #fff;
+      box-shadow: 0 0 15px var(--secondary-light);
+    }
+    .custom-traits-section {
+      margin-top: 15px;
+      padding: 12px;
+      background: linear-gradient(to bottom, var(--bg-dark), var(--bg-medium));
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+    }
+    .custom-trait-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .custom-trait-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .custom-trait-item input {
+      font-size: 10px;
+      padding: 5px;
+    }
+    .custom-trait-item button {
+      border-color: var(--error-color);
+      color: var(--error-color);
+      font-size: 10px;
+    }
+    .custom-trait-item button:hover {
+      background: var(--error-color);
+      color: #fff;
+    }
+    h2 {
+      font-size: 17px;
+      margin: 0 0 15px;
+      text-shadow: var(--text-shadow);
+      position: relative;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--primary-color);
+    }
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--primary-light);
+      animation: underlineGrow 1.5s ease-out forwards;
+      box-shadow: 0 0 10px var(--primary-light);
+    }
+    @keyframes underlineGrow {
+      to { width: 100%; }
+    }
+    .layer-item, .trait-item, .rarity-item {
+      background: linear-gradient(90deg, var(--bg-dark), var(--bg-medium), var(--bg-dark));
+      border: 2px solid var(--primary-color);
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 8px;
+      transition: all 0.3s;
+      font-size: 11px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    .layer-item { cursor: move; }
+    .layer-item:hover, .trait-item:hover {
+      background: linear-gradient(90deg, var(--bg-medium), var(--bg-light), var(--bg-medium));
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px var(--glow-color);
+    }
+    .layer-item.dragging { opacity: 0.5; transform: scale(0.95); }
+    .layer-header, .trait-rarity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .layer-header:hover, .trait-rarity-header:hover {
+      color: var(--primary-light);
+      text-shadow: 0 0 10px var(--primary-light);
+    }
+    .layer-traits, .trait-rarity-content {
+      display: none;
+      margin-top: 12px;
+    }
+    .layer-traits.show, .trait-rarity-content.show {
+      display: block;
+      animation: slideDown 0.4s ease-out;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; max-height: 0; }
+      to { opacity: 1; max-height: 1000px; }
+    }
+    .trait-weight { width: 55px; padding: 4px; font-size: 11px; }
+
+    /* Rarity weight slider styling */
+    .rarity-weight-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: var(--bg-dark);
+      border-radius: 3px;
+      outline: none;
+      border: 1px solid var(--border-light);
+      margin: 2px 0;
+    }
+    .rarity-weight-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--accent-color);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent-glow);
+      transition: all 0.2s;
+    }
+    .rarity-weight-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .rarity-weight-slider::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      background: var(--accent-color);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent-glow);
+      transition: all 0.2s;
+      border: none;
+    }
+    .rarity-weight-slider::-moz-range-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    input, select, textarea {
+      background: var(--bg-light);
+      border: 1px solid var(--border-light);
+      color: var(--primary-color);
+      padding: 10px 12px;
+      border-radius: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 13px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent-color);
+      background: var(--bg-medium);
+      box-shadow: 0 0 0 3px var(--glow-color);
+      outline: none;
+    }
+    input:hover, select:hover, textarea:hover {
+      border-color: var(--border-light);
+    }
+    textarea { width: 100%; resize: vertical; min-height: 80px; max-height: 200px; }
+    canvas {
+      border: 1px solid var(--border-color);
+      background: #000;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      max-width: 550px;
+      width: 100%;
+      height: auto;
+      cursor: grab;
+      transition: all 0.3s ease;
+    }
+    canvas:hover {
+      border-color: var(--border-light);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    }
+    canvas:active {
+      cursor: grabbing;
+    }
+    label {
+      font-size: 12px;
+      margin-bottom: 6px;
+      display: block;
+      font-weight: 500;
+      color: var(--primary-dark);
+    }
+    .tooltip { position: relative; display: inline-block; }
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 160px;
+      background: var(--bg-dark);
+      color: var(--primary-color);
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      border: 2px solid var(--primary-color);
+      box-shadow: var(--box-shadow);
+      font-size: 10px;
+    }
+    .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+    .progress-container { display: none; margin: 12px 0; text-align: center; }
+    .progress-container.show { display: block; }
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: var(--bg-medium);
+      border: 2px solid var(--primary-color);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-color), var(--primary-light), var(--primary-color));
+      width: 0;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px var(--primary-color);
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -100% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .progress-text { margin-top: 8px; font-size: 11px; text-shadow: var(--text-shadow); }
+    .spinner {
+      display: none;
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--primary-color);
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 12px auto;
+      box-shadow: 0 0 10px var(--primary-color);
+    }
+    .spinner.show { display: block; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    #previewControls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .exclusion-section {
+      margin-bottom: 15px;
+      padding-top: 20px;
+      border-top: 2px solid var(--primary-color);
+    }
+    .exclusion-section h2 {
+      font-size: 15px;
+      margin: 0 0 15px;
+      color: #ff6600;
+      text-shadow: 0 0 10px rgba(255, 102, 0, 0.7);
+      padding-bottom: 8px;
+      border-bottom: 2px solid #ff6600;
+    }
+    .exclusion-rule {
+      background: linear-gradient(90deg, var(--bg-dark), var(--bg-medium));
+      border: 2px solid #ff6600;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    .exclusion-rule-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #ff6600;
+    }
+    .exclusion-if-then {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 11px;
+    }
+    .exclusion-if-then-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .exclusion-if-then label {
+      font-weight: bold;
+      color: var(--primary-light);
+      text-shadow: 0 0 5px var(--primary-light);
+      font-size: 12px;
+    }
+    .exclusion-if-then select {
+      font-size: 11px;
+      padding: 6px;
+      width: 100%;
+    }
+    .exclusion-add-form {
+      background: linear-gradient(135deg, var(--bg-medium), var(--bg-dark));
+      border: 2px dashed #ff6600;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      display: none;
+    }
+    .exclusion-add-form.show {
+      display: block;
+      animation: fadeIn 0.4s ease-in;
+    }
+    .exclusion-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .exclusion-buttons button {
+      flex: 1;
+      font-size: 10px;
+    }
+    .add-exclusion-btn {
+      border-color: #ff6600 !important;
+      color: #ff6600 !important;
+    }
+    .add-exclusion-btn:hover {
+      background: #ff6600 !important;
+      color: #000 !important;
+      box-shadow: 0 0 15px rgba(255, 102, 0, 0.7) !important;
+    }
+    .target-checkbox-group {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 2px solid var(--primary-color);
+      border-radius: 6px;
+      padding: 8px;
+      background: var(--bg-dark);
+    }
+    .target-checkbox-group::-webkit-scrollbar {
+      width: 6px;
+    }
+    .target-checkbox-group::-webkit-scrollbar-track {
+      background: var(--bg-darker);
+      border-radius: 3px;
+    }
+    .target-checkbox-group::-webkit-scrollbar-thumb {
+      background: var(--primary-color);
+      border-radius: 3px;
+    }
+    .target-checkbox-group::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-light);
+    }
+    .target-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px;
+      margin: 4px 0;
+      border-radius: 4px;
+      transition: background 0.2s;
+      font-size: 11px;
+    }
+    .target-checkbox-item:hover {
+      background: var(--bg-medium);
+    }
+    .target-checkbox-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary-color);
+      cursor: pointer;
+    }
+    .target-checkbox-item label {
+      cursor: pointer;
+      margin: 0;
+      flex: 1;
+    }
+    .target-layer-group {
+      margin-bottom: 8px;
+    }
+    .target-layer-header {
+      font-weight: bold;
+      color: var(--primary-light);
+      margin-bottom: 4px;
+      font-size: 11px;
+      padding: 4px;
+      background: var(--bg-medium);
+      border-radius: 4px;
+    }
+    .layer-order-section {
+      background: linear-gradient(to bottom, var(--bg-dark), var(--bg-medium));
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .layer-order-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .layer-order-item {
+      background: linear-gradient(90deg, var(--bg-medium), var(--bg-dark));
+      border: 2px solid var(--primary-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+      transition: all 0.2s;
+      font-size: 11px;
+      user-select: none;
+    }
+    .layer-order-item:hover {
+      background: linear-gradient(90deg, var(--bg-light), var(--bg-medium));
+      box-shadow: 0 0 10px var(--glow-color);
+      transform: translateY(-2px);
+    }
+    .layer-order-item.dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+    .layer-order-item.drag-over {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 15px var(--primary-light);
+    }
+    .layer-order-arrows {
+      display: flex;
+      gap: 4px;
+    }
+    .layer-order-arrows button {
+      padding: 2px 6px;
+      font-size: 10px;
+    }
+    .combined-layer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .combined-layer-item {
+      background: linear-gradient(90deg, var(--bg-medium), var(--bg-dark));
+      border: 2px solid var(--primary-color);
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: move;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .combined-layer-item:hover {
+      background: linear-gradient(90deg, var(--bg-light), var(--bg-medium));
+      box-shadow: 0 0 10px var(--glow-color);
+      transform: translateY(-2px);
+    }
+    .combined-layer-item.dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+    .combined-layer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .combined-layer-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .combined-layer-drag-handle {
+      font-size: 14px;
+      color: var(--primary-dark);
+      cursor: grab;
+    }
+    .combined-layer-drag-handle:active {
+      cursor: grabbing;
+    }
+    .combined-layer-select {
+      width: 100%;
+      padding: 6px 8px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      color: var(--primary-color);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .combined-layer-select:hover {
+      border-color: var(--accent-color);
+      background: var(--bg-medium);
+    }
+    .combined-layer-select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+    .metadata-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .metadata-checkbox input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary-color);
+    }
+    .layer-name-input, .trait-name-input {
+      background: var(--bg-dark);
+      border: 2px solid var(--primary-color);
+      color: var(--primary-color);
+      padding: 4px;
+      border-radius: 4px;
+      font-size: 11px;
+      width: 140px;
+      transition: all 0.3s;
+    }
+    .layer-name-input:focus, .trait-name-input:focus {
+      border-color: var(--primary-light);
+      background: var(--bg-medium);
+      box-shadow: 0 0 10px var(--glow-color);
+      outline: none;
+    }
+    .trait-blend-mode {
+      padding: 4px;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .trait-position {
+      display: flex;
+      gap: 6px;
+    }
+    .trait-position input {
+      width: 65px;
+    }
+    .trait-scale input {
+      width: 65px;
+    }
+    .canvas-dimensions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .canvas-dimensions label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .canvas-dimensions input {
+      width: 90px;
+    }
+    .trait-item.selected {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 15px var(--glow-color);
+    }
+    .delete-layer-button, .delete-trait-button {
+      border: 2px solid var(--error-color);
+      color: var(--error-color);
+      padding: 4px 8px;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .delete-layer-button:hover, .delete-trait-button:hover {
+      background: var(--error-color);
+      color: #fff;
+      box-shadow: 0 0 15px var(--error-color);
+    }
+    .none-percentage-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      border: 1px solid var(--primary-color);
+    }
+    .none-percentage-control label {
+      font-size: 10px;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .none-percentage-control input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-dark);
+      outline: none;
+      padding: 0;
+    }
+    .none-percentage-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--primary-color);
+    }
+    .none-percentage-control input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--primary-color);
+      border: none;
+    }
+    .none-percentage-control span {
+      font-size: 10px;
+      min-width: 35px;
+      text-align: right;
+      color: var(--primary-light);
+      text-shadow: 0 0 5px var(--primary-light);
+    }
+  </style>
+</head>
+<body>
+  <div id="mouseGradient"></div>
+  <div id="pinkParticles"></div>
+  <div id="scanlinesBackground"></div>
+  <div id="scanlinesOverlay"></div>
+  <div class="window">
+    <div class="title-bar">
+      <span>THE GENERATOR</span>
+      <button class="theme-toggle">Toggle Theme</button>
+    </div>
+    <div class="container">
+      <div class="sidebar">
+        <h2>▸ LAYERS</h2>
+        <div class="tooltip">
+          <button>Add Layer</button>
+          <span class="tooltiptext">Add a new layer for traits</span>
+        </div>
+        <div class="tooltip">
+          <button>Import Project</button>
+          <span class="tooltiptext">Import a project folder with layers and traits</span>
+        </div>
+        <div id="layers"></div>
+
+        <div class="trait-rarity-section">
+          <div class="trait-rarity-header">
+            Trait Rarity
+            <span id="traitRarityToggle">▼</span>
+          </div>
+          <div class="trait-rarity-content show" id="traitRarity"></div>
+        </div>
+      </div>
+      <div class="main">
+        <h2>▸ PREVIEW</h2>
+        <div class="preview-section">
+          <div class="preview-canvas">
+            <div class="canvas-dimensions">
+              <label>Width: <input type="number" id="canvasWidth" value="500" min="1"></label>
+              <label>Height: <input type="number" id="canvasHeight" value="500" min="1"></label>
+            </div>
+            <canvas id="previewCanvas" width="500" height="500"></canvas>
+            <div id="previewControls"></div>
+            <div class="preview-buttons">
+              <div class="tooltip">
+                <button id="previewRandomNFTButton">Preview Random NFT</button>
+                <span class="tooltiptext">Generate a random NFT preview</span>
+              </div>
+              <div class="tooltip">
+                <button id="generateGalleryButton">Generate Preview NFTs</button>
+                <span class="tooltiptext">Generate a gallery of NFT previews</span>
+              </div>
+            </div>
+            <label>
+              Number of NFTs (max 3333):
+              <input type="number" id="nftCount" value="100" min="1" max="3333">
+            </label>
+            <div class="progress-container" id="galleryProgress">
+              <div class="progress-bar">
+                <div class="progress-bar-fill" id="galleryProgressBar"></div>
+              </div>
+              <div class="progress-text" id="galleryProgressText">0%</div>
+              <button id="cancelGalleryButton" style="display: none;">Cancel</button>
+              <div class="spinner" id="gallerySpinner"></div>
+            </div>
+            <div class="gallery-section">
+              <h2>▸ PREVIEW GALLERY</h2>
+              <div class="gallery-grid" id="galleryGrid"></div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 20px; flex: 1; max-width: 320px;">
+          <div class="metadata-section" style="max-width: none;">
+            <h2>▸ METADATA</h2>
+            <div class="tooltip">
+              <label for="metadataTitle">Collection Title:</label>
+              <input type="text" id="metadataTitle" value="Super NFT" placeholder="e.g., Super NFT Collection">
+              <span class="tooltiptext">Base title for all NFTs (ID appended)</span>
+            </div>
+            <div class="tooltip">
+              <label for="metadataDescription">Collection Description:</label>
+              <textarea id="metadataDescription" placeholder="A unique NFT collection">A unique NFT from the Super NFT Generator collection</textarea>
+              <span class="tooltiptext">Description for all NFTs</span>
+            </div>
+
+            <!-- Save/Load Properties Section -->
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border-color);">
+              <h2 style="font-size: 15px; margin-bottom: 12px;">▸ PROJECT PROPERTIES</h2>
+              <div class="tooltip">
+                <button id="savePropertiesButton">💾 SAVE PROPERTIES</button>
+                <span class="tooltiptext">Download all customizations (exclusions, gallery edits, etc.)</span>
+              </div>
+              <div class="tooltip" style="margin-top: 10px;">
+                <label for="loadPropertiesInput" style="cursor: pointer;">
+                  <button id="loadPropertiesButton" disabled>📂 LOAD PROPERTIES</button>
+                </label>
+                <input type="file" id="loadPropertiesInput" accept=".json" style="display: none;">
+                <span class="tooltiptext">Upload saved properties (available after importing project)</span>
+              </div>
+            </div>
+
+            <div class="tooltip metadata-checkbox">
+              <input type="checkbox" id="includeIPFS" checked>
+              <label for="includeIPFS">Include IPFS link in metadata</label>
+              <span class="tooltiptext">Some platforms require IPFS link, some don't</span>
+            </div>
+            <div class="tooltip">
+              <label for="ipfsCID">IPFS image CID:</label>
+              <input type="text" id="ipfsCID" placeholder="Enter IPFS CID">
+              <span class="tooltiptext">Enter the IPFS CID for your NFT images</span>
+            </div>
+            <div class="tooltip" id="exportMetadataContainer" style="display: none;">
+              <button id="exportMetadataButton">Export new Metadata</button>
+              <span class="tooltiptext">This will export new version of just the Jsons with newly updated IPFS information</span>
+            </div>
+
+            <!-- Exclusion Section -->
+            <div class="exclusion-section" style="margin-top: 20px;">
+              <h2>▸ EXCLUSION RULES</h2>
+              <button class="add-exclusion-btn" id="addExclusionBtn">+ Add Exclusion Rule</button>
+
+              <div class="exclusion-add-form" id="exclusionAddForm">
+                <div class="exclusion-if-then">
+                  <div class="exclusion-if-then-row">
+                    <label>IF TRAIT:</label>
+                    <select id="ifTraitSelect">
+                      <option value="">Select a trait...</option>
+                    </select>
+                  </div>
+                  <div class="exclusion-if-then-row">
+                    <label>THEN:</label>
+                    <select id="thenActionSelect">
+                      <option value="">Select action...</option>
+                      <option value="hide-layer">Hide Layer</option>
+                      <option value="hide-trait">Hide Trait</option>
+                    </select>
+                  </div>
+                  <div class="exclusion-if-then-row" id="thenTargetRow" style="display: none;">
+                    <label id="thenTargetLabel">TARGET:</label>
+                    <div id="thenTargetContainer"></div>
+                  </div>
+                </div>
+                <div class="exclusion-buttons">
+                  <button id="saveExclusionBtn">✓ Save Rule</button>
+                  <button id="cancelExclusionBtn">✗ Cancel</button>
+                </div>
+              </div>
+
+              <div id="exclusionRulesList"></div>
+            </div>
+          </div>
+
+          <!-- Gallery Filters Section - Below Metadata in Right Column -->
+          <div class="metadata-section" id="galleryFiltersSection" style="display: none; max-width: none;">
+            <h2>▸ GALLERY FILTERS</h2>
+            <div class="gallery-stats" id="galleryStats" style="margin-bottom: 12px; font-size: 12px; color: var(--primary-color);"></div>
+            <div class="filter-trait-groups" id="filterTraitGroups"></div>
+            <div class="filter-controls" style="margin-top: 12px;">
+              <button id="clearFiltersButton" style="width: 100%;">Clear All Filters</button>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        <div class="tooltip">
+          <button id="downloadNFTsButton">Download NFTs</button>
+          <span class="tooltiptext">Download NFTs from the preview gallery</span>
+        </div>
+        <div class="progress-container" id="nftProgress">
+          <div class="progress-bar">
+            <div class="progress-bar-fill" id="nftProgressBar"></div>
+          </div>
+          <div class="progress-text" id="nftProgressText">0%</div>
+          <button id="cancelNFTButton" style="display: none;">Cancel</button>
+          <div class="spinner" id="nftSpinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="nftModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button class="download-nft" id="downloadNFTModalButton">Download NFT</button>
+        <button class="replace-one" id="replaceOneButton">Replace with 1/1</button>
+        <button class="close-modal">Close</button>
+      </div>
+      <div class="modal-nav">
+        <button id="prevButton">Previous</button>
+        <span class="modal-counter" id="modalCounter">1/1</span>
+        <button id="nextButton">Next</button>
+      </div>
+      <div class="nft-name" id="nftName"></div>
+      <img id="modalImage" src="" alt="NFT Preview">
+
+      <!-- Combined Layer/Trait Editor -->
+      <div class="layer-order-section" id="layerOrderSection" style="margin-top: 15px;">
+        <h2 style="font-size: 14px; margin-bottom: 10px; color: var(--primary-light);">Layers & Traits (Drag to Reorder)</h2>
+        <div class="combined-layer-list" id="combinedLayerList"></div>
+      </div>
+
+      <div class="custom-traits-section" id="customTraitsSection" style="display: none;">
+        <h2 style="font-size: 14px;">Custom Traits for 1/1</h2>
+        <div class="tooltip">
+          <button id="addCustomTraitButton">Add Custom Trait</button>
+          <span class="tooltiptext">Add a custom layer and trait for this 1/1 NFT</span>
+        </div>
+        <div class="custom-trait-list" id="customTraitList"></div>
+      </div>
+      <div class="duplicate-warning" id="duplicateWarning">This NFT already exists</div>
+    </div>
+  </div>
+  <div class="footer" style="text-align: center; margin-top: 20px; padding: 15px;">
+    <p style="font-size: 12px; margin: 0 0 10px; text-shadow: var(--text-shadow);">
+      Created by <a href="https://x.com/lookupcatnip" target="_blank" style="color: var(--primary-light); text-decoration: none; font-weight: 700; transition: color 0.2s;">Catnip</a>
+    </p>
+    <div style="font-size: 10px; line-height: 1.6; color: var(--primary-color); text-shadow: var(--text-shadow);">
+      <p style="margin: 5px 0;">Donate</p>
+      <p style="margin: 5px 0; word-break: break-all;">Sol: <span style="color: var(--primary-light); font-family: 'JetBrains Mono', monospace;">BDRK87AEXBh4yY9wwSHhu6GajGgip6Jfq9atNcrPN4Tq</span></p>
+      <p style="margin: 5px 0; word-break: break-all;">Eth: <span style="color: var(--primary-light); font-family: 'JetBrains Mono', monospace;">0xEbB0870725874F1c4779271e2EE5B919e928faf5</span></p>
+    </div>
+  </div>
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script>
+    const state = {
+      layers: [],
+      previewTraits: new Map(),
+      galleryItems: [],
+      exclusionRules: [], // New: IF trait THEN exclude layer
+      currentModalIndex: 0,
+      isGeneratingGallery: false,
+      isDownloadingNFTs: false,
+      isTraitRarityVisible: true,
+      oneOfOneItems: new Map(),
+      canvasWidth: 500,
+      canvasHeight: 500,
+      dimensionsSet: false,
+      currentEditedTrait: null,
+      undoStack: []
+    };
+
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const blendModeMap = {
+      'Normal': 'source-over',
+      'Multiply': 'multiply',
+      'Screen': 'screen',
+      'Overlay': 'overlay',
+      'Darken': 'darken',
+      'Lighten': 'lighten',
+      'Color Dodge': 'color-dodge',
+      'Color Burn': 'color-burn',
+      'Hard Light': 'hard-light',
+      'Soft Light': 'soft-light',
+      'Difference': 'difference',
+      'Exclusion': 'exclusion',
+      'Hue': 'hue',
+      'Saturation': 'saturation',
+      'Color': 'color',
+      'Luminosity': 'luminosity'
+    };
+
+    const blendFunctions = {
+      'linear-burn': (a, b) => clamp(a + b - 1, 0, 1),
+      'linear-dodge': (a, b) => clamp(a + b, 0, 1),
+      'vivid-light': (a, b) => b < 0.5 ? (b === 0 ? 0 : clamp(1 - (1 - a) / (2 * b), 0, 1)) : (b === 1 ? 1 : clamp(a / (1 - 2 * (b - 0.5)), 0, 1)),
+      'linear-light': (a, b) => clamp(a + 2 * b - 1, 0, 1),
+      'pin-light': (a, b) => b < 0.5 ? Math.min(a, 2 * b) : Math.max(a, 2 * b - 1),
+      'hard-mix': (a, b) => a + b < 1 ? 0 : 1,
+      'subtract': (a, b) => clamp(a - b, 0, 1),
+      'divide': (a, b) => b === 0 ? 1 : clamp(a / b, 0, 1)
+    };
+
+    const customBlend = async (ctx, img, mode, x, y, w, h) => {
+      const temp = document.createElement('canvas');
+      temp.width = w;
+      temp.height = h;
+      const tempCtx = temp.getContext('2d', { willReadFrequently: true });
+      tempCtx.drawImage(img, 0, 0, w, h);
+      const blendImageData = tempCtx.getImageData(0, 0, w, h);
+      const blendData = blendImageData.data;
+      const baseImageData = ctx.getImageData(x, y, w, h);
+      const baseData = baseImageData.data;
+      const f = blendFunctions[mode.toLowerCase()];
+      if (!f) return;
+      for (let i = 0; i < baseData.length; i += 4) {
+        const aR = baseData[i] / 255, aG = baseData[i + 1] / 255, aB = baseData[i + 2] / 255, aA = baseData[i + 3] / 255;
+        const bR = blendData[i] / 255, bG = blendData[i + 1] / 255, bB = blendData[i + 2] / 255, bA = blendData[i + 3] / 255;
+        const outA = aA + bA * (1 - aA);
+        if (outA > 0) {
+          const outR = (aR * aA + f(aR, bR) * bA * (1 - aA)) / outA;
+          const outG = (aG * aA + f(aG, bG) * bA * (1 - aA)) / outA;
+          const outB = (aB * aA + f(aB, bB) * bA * (1 - aA)) / outA;
+          baseData[i] = clamp(Math.round(outR * 255), 0, 255);
+          baseData[i + 1] = clamp(Math.round(outG * 255), 0, 255);
+          baseData[i + 2] = clamp(Math.round(outB * 255), 0, 255);
+          baseData[i + 3] = clamp(Math.round(outA * 255), 0, 255);
+        }
+      }
+      ctx.putImageData(baseImageData, x, y);
+    };
+
+    const loadImage = (blob) => new Promise((resolve, reject) => {
+      if (!(blob instanceof Blob) || !blob.type.startsWith('image/')) return reject(new Error('Invalid file type. Only images are supported.'));
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.src = url;
+      const timeout = setTimeout(() => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Image loading timed out'));
+      }, 10000);
+      img.onload = () => {
+        clearTimeout(timeout);
+        if (img.width <= 0 || img.height <= 0) {
+          URL.revokeObjectURL(url);
+          reject(new Error('Invalid image dimensions'));
+        } else {
+          resolve({ img, url });
+        }
+      };
+      img.onerror = () => {
+        clearTimeout(timeout);
+        URL.revokeObjectURL(url);
+        reject(new Error('Failed to load image'));
+      };
+    });
+
+    const addLayer = () => {
+      const name = prompt('Enter layer name:');
+      if (!name) return;
+      if (state.layers.some(l => l.name === name.trim())) return alert('Layer name must be unique.');
+      const newLayer = {
+        id: Date.now(),
+        name: name.trim(),
+        traits: [],
+        zIndex: state.layers.length + 1,
+        showTraits: true,
+        nonePercentage: 0
+      };
+      state.layers.push(newLayer);
+      state.previewTraits.set(newLayer.name, '');
+      updateLayersUI();
+      updateExclusionUI();
+    };
+
+    const deleteLayer = (layerId) => {
+      const layer = state.layers.find(l => l.id === layerId);
+      if (!layer) return;
+      if (confirm(`Delete layer "${layer.name}" and all its traits?`)) {
+        state.layers = state.layers.filter(l => l.id !== layerId);
+        state.previewTraits.delete(layer.name);
+        state.exclusionRules = state.exclusionRules.filter(rule =>
+          rule.ifLayer !== layer.name && rule.targetLayer !== layer.name
+        );
+        state.layers.forEach((l, idx) => l.zIndex = state.layers.length - idx);
+        if (state.currentEditedTrait && state.currentEditedTrait.layerId === layerId) {
+          state.currentEditedTrait = null;
+        }
+        updateLayersUI();
+        updateExclusionUI();
+      }
+    };
+
+    const renameLayer = (layerId) => {
+      const layer = state.layers.find(l => l.id === layerId);
+      if (!layer) return;
+      const newName = prompt('Enter new layer name:', layer.name);
+      if (!newName || newName.trim() === layer.name) return;
+      if (state.layers.some(l => l.id !== layerId && l.name === newName.trim())) return alert('Layer name must be unique.');
+      const oldName = layer.name;
+      layer.name = newName.trim();
+      const traitValue = state.previewTraits.get(oldName);
+      state.previewTraits.delete(oldName);
+      state.previewTraits.set(layer.name, traitValue || '');
+      state.exclusionRules = state.exclusionRules.map(rule => ({
+        ...rule,
+        ifLayer: rule.ifLayer === oldName ? layer.name : rule.ifLayer,
+        targetLayer: rule.targetLayer === oldName ? layer.name : rule.targetLayer
+      }));
+      state.galleryItems.forEach(item => {
+        if (item.combination[oldName] !== undefined) {
+          item.combination[layer.name] = item.combination[oldName];
+          delete item.combination[oldName];
+        }
+      });
+      updateLayersUI();
+      updateExclusionUI();
+    };
+
+    const addTrait = (layerId) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/png';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const name = prompt('Enter trait name:', file.name.replace(/\.png$/i, ''));
+        if (!name) return;
+        const weight = parseInt(prompt('Enter trait weight:', '100'), 10);
+        if (isNaN(weight) || weight < 0) return alert('Weight must be a non-negative number.');
+        try {
+          const { img, url } = await loadImage(file);
+          const layer = state.layers.find(l => l.id === layerId);
+          if (!layer) return alert('Layer not found.');
+          layer.traits.push({ name, blob: file, weight, blendMode: 'Normal', x: 0, y: 0, scale: 1, image: img });
+          URL.revokeObjectURL(url);
+          layer.showTraits = true;
+          state.previewTraits.set(layer.name, name);
+          if (!state.dimensionsSet) {
+            state.canvasWidth = img.width;
+            state.canvasHeight = img.height;
+            document.getElementById('canvasWidth').value = state.canvasWidth;
+            document.getElementById('canvasHeight').value = state.canvasHeight;
+            updateCanvasDimensions();
+            state.dimensionsSet = true;
+          }
+          updateLayersUI();
+          updatePreviewCanvas();
+          updateExclusionUI();
+        } catch (error) {
+          alert(`Failed to load image: ${error.message}`);
+        }
+      };
+      input.click();
+    };
+
+    const addTraitBatch = (layerId) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/png';
+      input.multiple = true;
+      input.onchange = async (e) => {
+        const files = Array.from(e.target.files).filter(f => f.type.match(/^image\/png$/i));
+        if (!files.length) return alert('No valid PNG files found.');
+        const layer = state.layers.find(l => l.id === layerId);
+        if (!layer) return alert('Layer not found.');
+        const failedFiles = [];
+        const validFiles = [];
+        for (const file of files) {
+          try {
+            const { img, url } = await loadImage(file);
+            validFiles.push({ file, img, url });
+          } catch (error) {
+            failedFiles.push({ name: file.name, error: error.message });
+          }
+        }
+        if (failedFiles.length) {
+          console.warn('Failed to load some files:', failedFiles);
+        }
+        if (!validFiles.length) return alert('No valid images could be loaded.');
+        layer.traits.push(...validFiles.map(({ file, img, url }, idx) => {
+          const name = file.name.replace(/\.png$/i, '');
+          URL.revokeObjectURL(url);
+          if (!state.dimensionsSet && idx === 0) {
+            state.canvasWidth = img.width;
+            state.canvasHeight = img.height;
+            document.getElementById('canvasWidth').value = state.canvasWidth;
+            document.getElementById('canvasHeight').value = state.canvasHeight;
+            updateCanvasDimensions();
+            state.dimensionsSet = true;
+          }
+          return {
+            name,
+            blob: file,
+            weight: 100,
+            blendMode: 'Normal',
+            x: 0,
+            y: 0,
+            scale: 1,
+            image: img
+          };
+        }));
+        layer.showTraits = true;
+        if (!state.previewTraits.get(layer.name) && validFiles.length) {
+          state.previewTraits.set(layer.name, validFiles[0].file.name.replace(/\.png$/i, ''));
+        }
+        updateLayersUI();
+        updatePreviewCanvas();
+        updateExclusionUI();
+      };
+      input.click();
+    };
+
+    const importProject = () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.webkitdirectory = true;
+      input.multiple = true;
+      input.onchange = async (e) => {
+        const files = Array.from(e.target.files).filter(f => f.type.match(/^image\/png$/i));
+        if (!files.length) return alert('No valid PNG files found.');
+        state.layers = [];
+        state.previewTraits.clear();
+        state.exclusionRules = [];
+        const projectStructure = {};
+        const failedFiles = [];
+        const pathFirst = new Set();
+        let minLength = Infinity;
+        for (const file of files) {
+          const pathParts = file.webkitRelativePath.split('/').filter(p => p);
+          if (pathParts.length < 2) continue;
+          minLength = Math.min(minLength, pathParts.length);
+          pathFirst.add(pathParts[0]);
+        }
+        const isLayerFirst = pathFirst.size > 1 || minLength === 2;
+        for (const file of files) {
+          const pathParts = file.webkitRelativePath.split('/').filter(p => p);
+          if (pathParts.length < 2) continue;
+          let layerName, traitName;
+          if (isLayerFirst) {
+            layerName = pathParts[pathParts.length - 2];
+            traitName = file.name.replace(/\.png$/i, '');
+          } else {
+            layerName = pathParts[pathParts.length - 2];
+            traitName = file.name.replace(/\.png$/i, '');
+          }
+          if (!projectStructure[layerName]) projectStructure[layerName] = [];
+          projectStructure[layerName].push({ name: traitName, file });
+        }
+        for (const [layerName, traitFiles] of Object.entries(projectStructure)) {
+          const traits = [];
+          for (const { name, file } of traitFiles) {
+            try {
+              const { img, url } = await loadImage(file);
+              traits.push({ name, blob: file, weight: 100, blendMode: 'Normal', x: 0, y: 0, scale: 1, image: img });
+              URL.revokeObjectURL(url);
+              if (!state.dimensionsSet && traits.length === 1) {
+                state.canvasWidth = img.width;
+                state.canvasHeight = img.height;
+                document.getElementById('canvasWidth').value = state.canvasWidth;
+                document.getElementById('canvasHeight').value = state.canvasHeight;
+                updateCanvasDimensions();
+                state.dimensionsSet = true;
+              }
+            } catch (error) {
+              failedFiles.push({ name: `${layerName}/${name}`, error: error.message });
+            }
+          }
+          if (traits.length) {
+            const index = Object.keys(projectStructure).indexOf(layerName);
+            state.layers.push({
+              id: Date.now() + index,
+              name: layerName,
+              traits,
+              zIndex: state.layers.length + 1,
+              showTraits: false,
+              nonePercentage: 0
+            });
+            state.previewTraits.set(layerName, traits[0].name);
+          }
+        }
+        updateLayersUI();
+        updatePreviewCanvas();
+        updateExclusionUI();
+
+        // Enable load properties button after project import
+        document.getElementById('loadPropertiesButton').disabled = false;
+
+        if (failedFiles.length) {
+          console.warn('Failed to load some files:', failedFiles);
+          alert(`Loaded project with ${failedFiles.length} failed files. Check console for details.`);
+        }
+      };
+      input.click();
+    };
+
+    const deleteTrait = (layerId, traitIndex) => {
+      const layer = state.layers.find(l => l.id === layerId);
+      const trait = layer.traits[traitIndex];
+      if (!layer || !trait) return;
+      if (confirm(`Delete trait "${trait.name}" from layer "${layer.name}"?`)) {
+        state.exclusionRules = state.exclusionRules.filter(rule =>
+          !(rule.ifLayer === layer.name && rule.ifTrait === trait.name) &&
+          !(rule.targetLayer === layer.name && rule.targetTrait === trait.name)
+        );
+        layer.traits.splice(traitIndex, 1);
+        if (state.previewTraits.get(layer.name) === trait.name) {
+          state.previewTraits.set(layer.name, layer.traits[0]?.name || '');
+        }
+        if (state.currentEditedTrait && state.currentEditedTrait.layerId === layerId && state.currentEditedTrait.traitIndex === traitIndex) {
+          state.currentEditedTrait = null;
+        }
+        updateLayersUI();
+        updatePreviewCanvas();
+        updateExclusionUI();
+      }
+    };
+
+    const renameTrait = (layerId, traitIndex) => {
+      const layer = state.layers.find(l => l.id === layerId);
+      if (!layer || !layer.traits[traitIndex]) return;
+      const newName = prompt('Enter new trait name:', layer.traits[traitIndex].name);
+      if (!newName || newName.trim() === layer.traits[traitIndex].name) return;
+      const oldName = layer.traits[traitIndex].name;
+      layer.traits[traitIndex].name = newName.trim();
+      if (state.previewTraits.get(layer.name) === oldName) {
+        state.previewTraits.set(layer.name, newName.trim());
+      }
+      state.exclusionRules = state.exclusionRules.map(rule => ({
+        ...rule,
+        ifTrait: rule.ifLayer === layer.name && rule.ifTrait === oldName ? newName.trim() : rule.ifTrait,
+        targetTrait: rule.targetLayer === layer.name && rule.targetTrait === oldName ? newName.trim() : rule.targetTrait
+      }));
+      state.galleryItems.forEach(item => {
+        if (item.combination[layer.name] === oldName) {
+          item.combination[layer.name] = newName.trim();
+        }
+      });
+      updateLayersUI();
+      updateExclusionUI();
+    };
+
+    const editTrait = (layerId, traitIndex) => {
+      const layer = state.layers.find(l => l.id === layerId);
+      if (!layer || !layer.traits[traitIndex]) return;
+      state.currentEditedTrait = { layerId, traitIndex };
+      const trait = layer.traits[traitIndex];
+      const canvas = document.getElementById('previewCanvas');
+      canvas.style.cursor = 'crosshair';
+      updatePreviewCanvas();
+    };
+
+    const updateLayersUI = () => {
+      const layersDiv = document.getElementById('layers');
+      layersDiv.innerHTML = state.layers.map((layer, index) => `
+        <div class="layer-item" draggable="true" data-index="${index}" data-id="${layer.id}">
+          <div class="layer-header">
+            <input type="text" class="layer-name-input" value="${layer.name}" data-id="${layer.id}" onmousedown="event.stopPropagation()" draggable="false">
+            <div>
+              <button class="delete-layer-button" data-layer-id="${layer.id}" onmousedown="event.stopPropagation()" draggable="false">🗑️</button>
+              <span>${layer.showTraits ? '▼' : '▶'}</span>
+            </div>
+          </div>
+          <div class="layer-traits${layer.showTraits ? ' show' : ''}">
+            <div class="tooltip">
+              <button onmousedown="event.stopPropagation()" draggable="false">Add Trait</button>
+              <span class="tooltiptext">Add a single trait image</span>
+            </div>
+            <div class="tooltip">
+              <button onmousedown="event.stopPropagation()" draggable="false">Add Trait Batch</button>
+              <span class="tooltiptext">Add multiple trait images at once</span>
+            </div>
+            <div class="none-percentage-control">
+              <label>None %:</label>
+              <input type="range" min="0" max="100" value="${layer.nonePercentage || 0}" data-layer-id="${layer.id}" class="none-percentage-slider">
+              <span class="none-percentage-value">${layer.nonePercentage || 0}%</span>
+            </div>
+            ${layer.traits.map((trait, tIndex) => `
+              <div class="trait-item ${state.currentEditedTrait?.layerId === layer.id && state.currentEditedTrait?.traitIndex === tIndex ? 'selected' : ''}" data-layer-id="${layer.id}" data-trait-index="${tIndex}">
+                <input type="text" class="trait-name-input" value="${trait.name}" data-layer-id="${layer.id}" data-trait-index="${tIndex}">
+                <div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
+                  <label style="margin: 0;">Weight:</label>
+                  <input type="number" class="trait-weight" value="${trait.weight}" min="0" data-layer-id="${layer.id}" data-trait-index="${tIndex}">
+                  <button class="delete-trait-button" data-layer-id="${layer.id}" data-trait-index="${tIndex}">🗑️</button>
+                </div>
+                <select class="trait-blend-mode" data-layer-id="${layer.id}" data-trait-index="${tIndex}">
+                  ${Object.keys(blendModeMap).concat(['Linear Burn', 'Linear Dodge', 'Vivid Light', 'Linear Light', 'Pin Light', 'Hard Mix', 'Subtract', 'Divide']).map(mode =>
+                    `<option value="${mode}" ${trait.blendMode === mode ? 'selected' : ''}>${mode}</option>`
+                  ).join('')}
+                </select>
+                <div class="trait-position">
+                  <input type="number" placeholder="X" value="${trait.x || 0}" data-layer-id="${layer.id}" data-trait-index="${tIndex}" data-axis="x">
+                  <input type="number" placeholder="Y" value="${trait.y || 0}" data-layer-id="${layer.id}" data-trait-index="${tIndex}" data-axis="y">
+                </div>
+                <div class="trait-scale">
+                  <input type="number" placeholder="Scale" value="${trait.scale || 1}" step="0.1" min="0.1" max="10" data-layer-id="${layer.id}" data-trait-index="${tIndex}" data-scale="true">
+                </div>
+                <button style="margin-top: 5px;" data-layer-id="${layer.id}" data-trait-index="${tIndex}" class="edit-trait-button">Edit Position</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+      updatePreviewControls();
+      updateTraitRarityUI();
+    };
+
+    const toggleTraits = (header) => {
+      const traitsDiv = header.nextElementSibling;
+      const layerIndex = parseInt(header.parentElement.dataset.index);
+      state.layers[layerIndex].showTraits = !state.layers[layerIndex].showTraits;
+      traitsDiv.classList.toggle('show');
+      header.querySelector('span').textContent = state.layers[layerIndex].showTraits ? '▼' : '▶';
+    };
+
+    const handleDragStart = (e) => {
+      e.target.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', e.target.dataset.index);
+    };
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      const dragging = document.querySelector('.dragging');
+      const afterElement = getDragAfterElement(e.currentTarget, e.clientY);
+      if (afterElement == null) {
+        e.currentTarget.appendChild(dragging);
+      } else {
+        e.currentTarget.insertBefore(dragging, afterElement);
+      }
+    };
+
+    const handleDragEnd = (e) => {
+      e.target.classList.remove('dragging');
+      const newOrder = Array.from(document.querySelectorAll('.layer-item')).map(el => parseInt(el.dataset.index));
+      const newLayers = newOrder.map(i => state.layers[i]);
+      state.layers = newLayers;
+      state.layers.forEach((layer, idx) => layer.zIndex = state.layers.length - idx);
+      updateLayersUI();
+      updatePreviewCanvas();
+    };
+
+    const getDragAfterElement = (container, y) => {
+      const draggableElements = [...container.querySelectorAll('.layer-item:not(.dragging)')];
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    };
+
+    const updatePreviewControls = () => {
+      const controlsDiv = document.getElementById('previewControls');
+      controlsDiv.innerHTML = state.layers.map(layer => `
+        <select data-layer="${layer.name}" style="font-size: 10px; padding: 4px;">
+          <option value="">None</option>
+          ${layer.traits.map(trait => `
+            <option value="${trait.name}" ${state.previewTraits.get(layer.name) === trait.name ? 'selected' : ''}>
+              ${trait.name}
+            </option>
+          `).join('')}
+        </select>
+      `).join('');
+    };
+
+    const updateTraitRarityUI = () => {
+      const rarityDiv = document.getElementById('traitRarity');
+      rarityDiv.innerHTML = state.layers.map((layer, lIndex) => `
+        <div class="rarity-item" data-layer-index="${lIndex}">
+          <h3 style="font-size: 12px; margin: 0 0 8px;">${layer.name}</h3>
+          ${layer.traits.map((trait, tIndex) => `
+            <div style="display: flex; flex-direction: column; gap: 4px; margin: 8px 0; font-size: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span>${trait.name}</span>
+                <span style="color: var(--primary-light); font-weight: 600;" class="rarity-weight-display" data-layer-index="${lIndex}" data-trait-index="${tIndex}">${trait.weight}</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="100"
+                value="${trait.weight}"
+                class="rarity-weight-slider"
+                data-layer-index="${lIndex}"
+                data-trait-index="${tIndex}"
+                style="width: 100%; cursor: pointer;"
+              >
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    };
+
+    const toggleTraitRarity = () => {
+      state.isTraitRarityVisible = !state.isTraitRarityVisible;
+      const toggle = document.getElementById('traitRarityToggle');
+      const content = document.getElementById('traitRarity');
+      content.classList.toggle('show', state.isTraitRarityVisible);
+      toggle.textContent = state.isTraitRarityVisible ? '▼' : '▶';
+    };
+
+    // New Exclusion System
+    const updateExclusionUI = () => {
+      const rulesList = document.getElementById('exclusionRulesList');
+      const ifSelect = document.getElementById('ifTraitSelect');
+
+      // Update IF dropdown with layers at top, then traits
+      let ifOptions = '<option value="">Select a trait...</option>';
+
+      state.layers.forEach(layer => {
+        ifOptions += `<optgroup label="${layer.name}">`;
+        layer.traits.forEach(trait => {
+          ifOptions += `<option value="${layer.name}:${trait.name}">${trait.name}</option>`;
+        });
+        ifOptions += '</optgroup>';
+      });
+
+      ifSelect.innerHTML = ifOptions;
+
+      // Group rules by IF condition for better display
+      const groupedRules = new Map();
+      state.exclusionRules.forEach((rule, index) => {
+        const key = `${rule.ifLayer}:${rule.ifTrait}:${rule.action}`;
+        if (!groupedRules.has(key)) {
+          groupedRules.set(key, { rule, indices: [], targets: [] });
+        }
+        const group = groupedRules.get(key);
+        group.indices.push(index);
+        if (rule.action === 'hide-layer') {
+          group.targets.push(rule.targetLayer);
+        } else if (rule.action === 'hide-trait') {
+          group.targets.push(`${rule.targetLayer}: ${rule.targetTrait}`);
+        }
+      });
+
+      // Display grouped rules
+      let html = '';
+      let displayIndex = 1;
+      groupedRules.forEach((group) => {
+        const { rule, indices, targets } = group;
+        const actionText = rule.action === 'hide-layer' ? 'Hide Layers' : 'Hide Traits';
+
+        html += `
+          <div class="exclusion-rule">
+            <div class="exclusion-rule-header">
+              <span>Rule #${displayIndex}</span>
+              <div style="display: flex; gap: 6px;">
+                <button class="edit-button" data-rule-indices='${JSON.stringify(indices)}' style="background: var(--secondary-color); border-color: var(--secondary-color); padding: 4px 8px; font-size: 10px;">✏️ Edit</button>
+                <button class="delete-button" data-rule-indices='${JSON.stringify(indices)}'>🗑️</button>
+              </div>
+            </div>
+            <div style="font-size: 11px; line-height: 1.6;">
+              <div style="margin-bottom: 6px;"><strong style="color: var(--primary-light);">IF:</strong> ${rule.ifLayer}: ${rule.ifTrait}</div>
+              <div><strong style="color: #ff6600;">THEN ${actionText}:</strong></div>
+              <ul style="margin: 4px 0 0 20px; padding: 0;">
+                ${targets.map(t => `<li>${t}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        `;
+        displayIndex++;
+      });
+
+      rulesList.innerHTML = html;
+    };
+
+    const showExclusionForm = () => {
+      const form = document.getElementById('exclusionAddForm');
+      form.classList.add('show');
+    };
+
+    const hideExclusionForm = () => {
+      const form = document.getElementById('exclusionAddForm');
+      form.classList.remove('show');
+      document.getElementById('ifTraitSelect').value = '';
+      document.getElementById('thenActionSelect').value = '';
+      document.getElementById('thenTargetContainer').innerHTML = '';
+      document.getElementById('thenTargetRow').style.display = 'none';
+    };
+
+    const updateTargetDropdown = () => {
+      const action = document.getElementById('thenActionSelect').value;
+      const targetRow = document.getElementById('thenTargetRow');
+      const targetLabel = document.getElementById('thenTargetLabel');
+      const targetContainer = document.getElementById('thenTargetContainer');
+
+      if (!action) {
+        targetRow.style.display = 'none';
+        return;
+      }
+
+      targetRow.style.display = 'block';
+
+      if (action === 'hide-layer') {
+        targetLabel.textContent = 'HIDE LAYERS:';
+        let html = '<div class="target-checkbox-group">';
+        state.layers.forEach(layer => {
+          html += `
+            <div class="target-checkbox-item">
+              <input type="checkbox" id="layer_${layer.id}" value="${layer.name}">
+              <label for="layer_${layer.id}">${layer.name}</label>
+            </div>
+          `;
+        });
+        html += '</div>';
+        targetContainer.innerHTML = html;
+      } else if (action === 'hide-trait') {
+        targetLabel.textContent = 'HIDE TRAITS:';
+        let html = '<div class="target-checkbox-group">';
+        state.layers.forEach(layer => {
+          html += `<div class="target-layer-group">`;
+          html += `<div class="target-layer-header">${layer.name}</div>`;
+          layer.traits.forEach(trait => {
+            const uniqueId = `trait_${layer.id}_${trait.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            html += `
+              <div class="target-checkbox-item">
+                <input type="checkbox" id="${uniqueId}" value="${layer.name}:${trait.name}">
+                <label for="${uniqueId}">${trait.name}</label>
+              </div>
+            `;
+          });
+          html += `</div>`;
+        });
+        html += '</div>';
+        targetContainer.innerHTML = html;
+      }
+    };
+
+    const saveExclusionRule = () => {
+      const ifValue = document.getElementById('ifTraitSelect').value;
+      const action = document.getElementById('thenActionSelect').value;
+
+      if (!ifValue || !action) {
+        return alert('Please complete all fields.');
+      }
+
+      // Get all checked targets
+      const checkedBoxes = document.querySelectorAll('#thenTargetContainer input[type="checkbox"]:checked');
+      if (checkedBoxes.length === 0) {
+        return alert('Please select at least one target to hide.');
+      }
+
+      const [ifLayer, ifTrait] = ifValue.split(':');
+
+      // Create a rule for each checked target
+      const newRules = [];
+      checkedBoxes.forEach(checkbox => {
+        const targetValue = checkbox.value;
+
+        if (action === 'hide-layer') {
+          // Check if trying to hide the same layer
+          if (ifLayer === targetValue) {
+            return; // Skip this one
+          }
+
+          // Check for duplicates
+          const duplicate = state.exclusionRules.some(rule =>
+            rule.action === 'hide-layer' &&
+            rule.ifLayer === ifLayer &&
+            rule.ifTrait === ifTrait &&
+            rule.targetLayer === targetValue
+          );
+
+          if (!duplicate) {
+            newRules.push({
+              ifLayer,
+              ifTrait,
+              action: 'hide-layer',
+              targetLayer: targetValue
+            });
+          }
+        } else if (action === 'hide-trait') {
+          const [targetLayer, targetTrait] = targetValue.split(':');
+
+          // Check if trying to hide the same trait
+          if (ifLayer === targetLayer && ifTrait === targetTrait) {
+            return; // Skip this one
+          }
+
+          // Check for duplicates
+          const duplicate = state.exclusionRules.some(rule =>
+            rule.action === 'hide-trait' &&
+            rule.ifLayer === ifLayer &&
+            rule.ifTrait === ifTrait &&
+            rule.targetLayer === targetLayer &&
+            rule.targetTrait === targetTrait
+          );
+
+          if (!duplicate) {
+            newRules.push({
+              ifLayer,
+              ifTrait,
+              action: 'hide-trait',
+              targetLayer,
+              targetTrait
+            });
+          }
+        }
+      });
+
+      if (newRules.length === 0) {
+        return alert('No valid rules to add (duplicates or self-references skipped).');
+      }
+
+      state.exclusionRules.push(...newRules);
+      updateExclusionUI();
+      hideExclusionForm();
+    };
+
+    const deleteExclusionRule = (indices) => {
+      if (confirm(`Delete this exclusion rule?`)) {
+        // Sort indices in descending order to avoid index shifting issues
+        indices.sort((a, b) => b - a);
+        indices.forEach(index => {
+          state.exclusionRules.splice(index, 1);
+        });
+        updateExclusionUI();
+      }
+    };
+
+    const editExclusionRule = (indices) => {
+      // Get the first rule to populate the form
+      const rule = state.exclusionRules[indices[0]];
+      if (!rule) return;
+
+      // Delete the old rules
+      indices.sort((a, b) => b - a);
+      indices.forEach(index => {
+        state.exclusionRules.splice(index, 1);
+      });
+
+      // Show the form and populate it with the rule data
+      showExclusionForm();
+
+      // Populate IF trait
+      document.getElementById('ifTraitSelect').value = `${rule.ifLayer}:${rule.ifTrait}`;
+
+      // Populate THEN action
+      document.getElementById('thenActionSelect').value = rule.action;
+      updateTargetDropdown();
+
+      // Wait for dropdown to update, then select targets
+      setTimeout(() => {
+        const targetDropdown = document.getElementById('thenTargetContainer');
+
+        if (rule.action === 'hide-layer') {
+          // For hide-layer, collect all target layers from the grouped rules
+          const allTargetLayers = indices.map(i => state.exclusionRules[i] || rule).map(r => r.targetLayer);
+          const checkboxes = targetDropdown.querySelectorAll('input[type="checkbox"]');
+          checkboxes.forEach(checkbox => {
+            if (allTargetLayers.includes(checkbox.value)) {
+              checkbox.checked = true;
+            }
+          });
+        } else if (rule.action === 'hide-trait') {
+          // For hide-trait, collect all target traits from the grouped rules
+          const allTargetTraits = indices.map(i => state.exclusionRules[i] || rule).map(r => `${r.targetLayer}:${r.targetTrait}`);
+          const checkboxes = targetDropdown.querySelectorAll('input[type="checkbox"]');
+          checkboxes.forEach(checkbox => {
+            if (allTargetTraits.includes(checkbox.value)) {
+              checkbox.checked = true;
+            }
+          });
+        }
+      }, 100);
+    };
+
+    const updateCanvasDimensions = () => {
+      const width = parseInt(document.getElementById('canvasWidth').value) || 500;
+      const height = parseInt(document.getElementById('canvasHeight').value) || 500;
+      state.canvasWidth = width;
+      state.canvasHeight = height;
+      const canvas = document.getElementById('previewCanvas');
+      canvas.width = width;
+      canvas.height = height;
+      updatePreviewCanvas();
+    };
+
+    const updatePreviewCanvas = async () => {
+      const canvas = document.getElementById('previewCanvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const sortedLayers = [...state.layers].sort((a, b) => a.zIndex - b.zIndex);
+      for (const layer of sortedLayers) {
+        const traitName = state.previewTraits.get(layer.name);
+        if (!traitName) continue;
+        const trait = layer.traits.find(t => t.name === traitName);
+        if (!trait || !trait.image) continue;
+        const x = trait.x || 0;
+        const y = trait.y || 0;
+        const scale = trait.scale || 1;
+        const w = trait.image.width * scale;
+        const h = trait.image.height * scale;
+        const mode = trait.blendMode || 'Normal';
+        if (blendModeMap[mode]) {
+          ctx.globalCompositeOperation = blendModeMap[mode];
+          ctx.drawImage(trait.image, x, y, w, h);
+          ctx.globalCompositeOperation = 'source-over';
+        } else {
+          await customBlend(ctx, trait.image, mode, x, y, w, h);
+        }
+      }
+    };
+
+    const randomizeTrait = (layerName) => {
+      const layer = state.layers.find(l => l.name === layerName);
+      if (!layer || !layer.traits.length) return state.previewTraits.set(layerName, '');
+
+      // Apply none percentage
+      if (layer.nonePercentage && Math.random() * 100 < layer.nonePercentage) {
+        return state.previewTraits.set(layerName, '');
+      }
+
+      const totalWeight = layer.traits.reduce((sum, t) => sum + t.weight, 0);
+      let random = Math.random() * totalWeight;
+      for (const trait of layer.traits) {
+        random -= trait.weight;
+        if (random <= 0) {
+          state.previewTraits.set(layerName, trait.name);
+          return;
+        }
+      }
+      state.previewTraits.set(layerName, layer.traits[0].name);
+    };
+
+    const previewRandomNFT = () => {
+      // Generate random combination
+      const combination = {};
+      state.layers.forEach(layer => {
+        // Apply none percentage
+        if (layer.nonePercentage && Math.random() * 100 < layer.nonePercentage) {
+          combination[layer.name] = '';
+          return;
+        }
+
+        if (!layer.traits.length) {
+          combination[layer.name] = '';
+          return;
+        }
+
+        const totalWeight = layer.traits.reduce((sum, t) => sum + t.weight, 0);
+        let random = Math.random() * totalWeight;
+        for (const trait of layer.traits) {
+          random -= trait.weight;
+          if (random <= 0) {
+            combination[layer.name] = trait.name;
+            return;
+          }
+        }
+        combination[layer.name] = layer.traits[0].name;
+      });
+
+      // Apply exclusion rules to enforce trait hiding
+      applyExclusionRules(combination);
+
+      // Apply the combination to preview
+      state.layers.forEach(layer => {
+        state.previewTraits.set(layer.name, combination[layer.name] || '');
+      });
+
+      updatePreviewControls();
+      updatePreviewCanvas();
+    };
+
+    const renderCombination = async (combination, thumbnail = false) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = thumbnail ? Math.min(state.canvasWidth, 200) : state.canvasWidth;
+      canvas.height = thumbnail ? Math.min(state.canvasHeight, 200) : state.canvasHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const scale = thumbnail ? Math.min(200 / state.canvasWidth, 200 / state.canvasHeight) : 1;
+      const sortedLayers = [...state.layers].sort((a, b) => a.zIndex - b.zIndex);
+      for (const layer of sortedLayers) {
+        const traitName = combination[layer.name];
+        if (!traitName) continue;
+        const trait = layer.traits.find(t => t.name === traitName);
+        if (!trait || !trait.image) continue;
+        const x = (trait.x || 0) * scale;
+        const y = (trait.y || 0) * scale;
+        const traitScale = trait.scale || 1;
+        const w = trait.image.width * traitScale * scale;
+        const h = trait.image.height * traitScale * scale;
+        const mode = trait.blendMode || 'Normal';
+        if (blendModeMap[mode]) {
+          ctx.globalCompositeOperation = blendModeMap[mode];
+          ctx.drawImage(trait.image, x, y, w, h);
+          ctx.globalCompositeOperation = 'source-over';
+        } else {
+          await customBlend(ctx, trait.image, mode, x, y, w, h);
+        }
+      }
+      return canvas.toDataURL('image/png');
+    };
+
+    const generateRandomCombination = () => {
+      const combination = {};
+      state.layers.forEach(layer => {
+        // Apply none percentage
+        if (layer.nonePercentage && Math.random() * 100 < layer.nonePercentage) {
+          combination[layer.name] = '';
+          return;
+        }
+
+        if (!layer.traits.length) {
+          combination[layer.name] = '';
+          return;
+        }
+        const totalWeight = layer.traits.reduce((sum, t) => sum + t.weight, 0);
+        let random = Math.random() * totalWeight;
+        for (const trait of layer.traits) {
+          random -= trait.weight;
+          if (random <= 0) {
+            combination[layer.name] = trait.name;
+            return;
+          }
+        }
+        combination[layer.name] = layer.traits[0].name;
+      });
+
+      // Apply exclusion rules to force traits to be hidden
+      applyExclusionRules(combination);
+
+      return combination;
+    };
+
+    const applyExclusionRules = (combination) => {
+      // Apply exclusion rules by forcing conflicting traits to be hidden
+      // This FAVORS the selected trait and hides conflicts instead of rejecting the combination
+      for (const rule of state.exclusionRules) {
+        if (combination[rule.ifLayer] === rule.ifTrait) {
+          if (rule.action === 'hide-layer') {
+            // Force the target layer to be empty
+            combination[rule.targetLayer] = '';
+          } else if (rule.action === 'hide-trait') {
+            // If the specific target trait is present, we need to pick a different trait
+            if (combination[rule.targetLayer] === rule.targetTrait) {
+              // Find an alternative trait from the same layer that doesn't conflict
+              const targetLayer = state.layers.find(l => l.name === rule.targetLayer);
+              if (targetLayer && targetLayer.traits.length > 0) {
+                // Get all traits that are NOT the conflicting one
+                const availableTraits = targetLayer.traits.filter(t => t.name !== rule.targetTrait);
+
+                if (availableTraits.length > 0) {
+                  // Pick a random alternative based on weights
+                  const totalWeight = availableTraits.reduce((sum, t) => sum + t.weight, 0);
+                  let random = Math.random() * totalWeight;
+                  for (const trait of availableTraits) {
+                    random -= trait.weight;
+                    if (random <= 0) {
+                      combination[rule.targetLayer] = trait.name;
+                      break;
+                    }
+                  }
+                  // Fallback to first available trait if something went wrong
+                  if (!combination[rule.targetLayer] || combination[rule.targetLayer] === rule.targetTrait) {
+                    combination[rule.targetLayer] = availableTraits[0].name;
+                  }
+                } else {
+                  // No alternative traits available, force to empty
+                  combination[rule.targetLayer] = '';
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const isValidCombination = (combination) => {
+      // Check exclusion rules
+      for (const rule of state.exclusionRules) {
+        if (combination[rule.ifLayer] === rule.ifTrait) {
+          if (rule.action === 'hide-layer') {
+            // If the IF trait is selected, the target layer should be hidden (empty)
+            if (combination[rule.targetLayer]) {
+              return false;
+            }
+          } else if (rule.action === 'hide-trait') {
+            // If the IF trait is selected, the specific target trait should not appear
+            if (combination[rule.targetLayer] === rule.targetTrait) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    };
+
+    const generateUniqueCombination = () => {
+      const maxAttempts = 10000;
+      const existingCombinations = new Set(state.galleryItems.map(item => JSON.stringify(item.combination)));
+      for (let i = 0; i < maxAttempts; i++) {
+        const combination = generateRandomCombination();
+        if (!isValidCombination(combination)) continue;
+        const key = JSON.stringify(combination);
+        if (!existingCombinations.has(key)) {
+          return combination;
+        }
+      }
+      return null;
+    };
+
+    // Optimized gallery generation with batching
+    const generateGallery = async () => {
+      if (state.isGeneratingGallery) return;
+      state.isGeneratingGallery = true;
+      const count = parseInt(document.getElementById('nftCount').value) || 100;
+      if (isNaN(count) || count <= 0 || count > 3333) {
+        state.isGeneratingGallery = false;
+        return alert('Number of NFTs must be between 1 and 3333.');
+      }
+      const generateButton = document.getElementById('generateGalleryButton');
+      const progressContainer = document.getElementById('galleryProgress');
+      const progressBar = document.getElementById('galleryProgressBar');
+      const progressText = document.getElementById('galleryProgressText');
+      const cancelButton = document.getElementById('cancelGalleryButton');
+      const spinner = document.getElementById('gallerySpinner');
+      generateButton.disabled = true;
+      generateButton.textContent = 'Generating...';
+      progressContainer.classList.add('show');
+      cancelButton.style.display = 'block';
+      spinner.classList.add('show');
+      state.galleryItems = [];
+      const galleryGrid = document.getElementById('galleryGrid');
+      galleryGrid.innerHTML = '';
+
+      const batchSize = 10; // Process in batches for better performance
+
+      try {
+        for (let i = 0; i < count && state.isGeneratingGallery; i += batchSize) {
+          const batchEnd = Math.min(i + batchSize, count);
+          const batch = [];
+
+          for (let j = i; j < batchEnd && state.isGeneratingGallery; j++) {
+            const combination = generateUniqueCombination();
+            if (!combination) throw new Error('Could not generate a unique valid combination.');
+            batch.push(combination);
+          }
+
+          // Render batch in parallel
+          const renderedBatch = await Promise.all(
+            batch.map(async (combination, idx) => {
+              const thumbnailData = await renderCombination(combination, true);
+              const fullData = await renderCombination(combination, false);
+              return { combination, dataUrl: fullData, thumbnail: thumbnailData };
+            })
+          );
+
+          // Add to state and DOM
+          renderedBatch.forEach((item, idx) => {
+            const actualIndex = i + idx;
+            state.galleryItems.push(item);
+            const galleryItem = document.createElement('div');
+            galleryItem.className = 'gallery-item';
+            galleryItem.dataset.index = actualIndex;
+            galleryItem.draggable = true;
+            galleryItem.innerHTML = `
+              <div class="gallery-item-number">#${actualIndex + 1}</div>
+              <img src="${item.thumbnail}" alt="NFT ${actualIndex + 1}">
+            `;
+            galleryGrid.appendChild(galleryItem);
+          });
+
+          const progress = ((batchEnd) / count) * 100;
+          progressBar.style.width = `${progress}%`;
+          progressText.textContent = `${Math.round(progress)}%`;
+
+          // Yield to browser
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+      } catch (error) {
+        alert(`Failed to generate gallery: ${error.message}`);
+      } finally {
+        state.isGeneratingGallery = false;
+        generateButton.disabled = false;
+        generateButton.textContent = 'Generate Preview NFTs';
+        progressContainer.classList.remove('show');
+        cancelButton.style.display = 'none';
+        spinner.classList.remove('show');
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+
+        // Initialize filters after generation
+        if (state.galleryItems.length > 0) {
+          initializeGalleryFilters();
+        }
+      }
+    };
+
+    const createMetadata = (id, combination, layers) => {
+      const title = document.getElementById('metadataTitle').value.trim() || 'Super NFT';
+      const description = document.getElementById('metadataDescription').value.trim() || 'A unique NFT from the Super NFT Generator collection';
+      const ipfsCID = document.getElementById('ipfsCID').value.trim();
+      const includeIPFS = document.getElementById('includeIPFS').checked;
+      const attributes = Object.entries(combination).filter(([_, trait]) => trait).map(([layer, trait]) => ({
+        trait_type: layer,
+        value: trait
+      }));
+      const oneOfOneData = state.oneOfOneItems.get(id - 1);
+      if (oneOfOneData) {
+        oneOfOneData.customTraits.forEach(trait => {
+          if (trait.layerName && trait.traitName) {
+            attributes.push({
+              trait_type: trait.layerName,
+              value: trait.traitName
+            });
+          }
+        });
+      }
+      const metadata = {
+        name: oneOfOneData ? `1/1 NFT #${id}` : `${title} #${id}`,
+        description,
+        image: includeIPFS && ipfsCID ? `ipfs://${ipfsCID}/${id}.png` : `${id}.png`,
+        attributes
+      };
+      return metadata;
+    };
+
+    const exportNewMetadata = async () => {
+      if (!state.galleryItems.length) return alert('No NFTs to export. Generate preview gallery first.');
+      const zip = new JSZip();
+      const title = document.getElementById('metadataTitle').value.trim() || 'Super NFT';
+      const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
+      for (let i = 0; i < state.galleryItems.length; i++) {
+        const metadata = createMetadata(i + 1, state.galleryItems[i].combination, state.layers);
+        zip.file(`${i + 1}.json`, JSON.stringify(metadata, null, 2));
+      }
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, `${sanitizedTitle}_Metadata.zip`);
+    };
+
+    // Save/Load Project Properties
+    const saveProjectProperties = () => {
+      const properties = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        metadataTitle: document.getElementById('metadataTitle').value.trim(),
+        metadataDescription: document.getElementById('metadataDescription').value.trim(),
+        canvasWidth: state.canvasWidth,
+        canvasHeight: state.canvasHeight,
+        exclusionRules: state.exclusionRules,
+        layers: state.layers.map(layer => ({
+          name: layer.name,
+          zIndex: layer.zIndex,
+          nonePercentage: layer.nonePercentage,
+          blendMode: layer.blendMode,
+          showTraits: layer.showTraits,
+          traits: layer.traits.map(trait => ({
+            name: trait.name,
+            weight: trait.weight
+          }))
+        })),
+        galleryItems: state.galleryItems.map(item => ({
+          combination: item.combination,
+          customLayerOrder: item.customLayerOrder
+        })),
+        oneOfOneItems: Array.from(state.oneOfOneItems.entries()).map(([index, data]) => ({
+          index,
+          customTraits: data.customTraits
+        }))
+      };
+
+      const blob = new Blob([JSON.stringify(properties, null, 2)], { type: 'application/json' });
+      const title = document.getElementById('metadataTitle').value.trim() || 'Super_NFT';
+      const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
+      saveAs(blob, `${sanitizedTitle}_Properties.json`);
+    };
+
+    const loadProjectProperties = async (file) => {
+      try {
+        const text = await file.text();
+        const properties = JSON.parse(text);
+
+        if (!properties.version) {
+          return alert('Invalid properties file format.');
+        }
+
+        // Apply metadata
+        if (properties.metadataTitle) {
+          document.getElementById('metadataTitle').value = properties.metadataTitle;
+        }
+        if (properties.metadataDescription) {
+          document.getElementById('metadataDescription').value = properties.metadataDescription;
+        }
+
+        // Apply canvas dimensions
+        if (properties.canvasWidth && properties.canvasHeight) {
+          document.getElementById('canvasWidth').value = properties.canvasWidth;
+          document.getElementById('canvasHeight').value = properties.canvasHeight;
+          state.canvasWidth = properties.canvasWidth;
+          state.canvasHeight = properties.canvasHeight;
+          updateCanvasDimensions();
+        }
+
+        // Apply exclusion rules
+        if (properties.exclusionRules) {
+          state.exclusionRules = properties.exclusionRules;
+          updateExclusionUI();
+        }
+
+        // Apply layer properties (weights, none percentages, blend modes, z-index)
+        if (properties.layers && state.layers.length > 0) {
+          properties.layers.forEach(savedLayer => {
+            const currentLayer = state.layers.find(l => l.name === savedLayer.name);
+            if (currentLayer) {
+              currentLayer.zIndex = savedLayer.zIndex;
+              currentLayer.nonePercentage = savedLayer.nonePercentage || 0;
+              currentLayer.blendMode = savedLayer.blendMode || 'normal';
+              currentLayer.showTraits = savedLayer.showTraits !== undefined ? savedLayer.showTraits : true;
+
+              // Apply trait weights
+              savedLayer.traits.forEach(savedTrait => {
+                const currentTrait = currentLayer.traits.find(t => t.name === savedTrait.name);
+                if (currentTrait) {
+                  currentTrait.weight = savedTrait.weight;
+                }
+              });
+            }
+          });
+
+          // Reorder the layers array based on z-index (highest z-index first)
+          state.layers.sort((a, b) => b.zIndex - a.zIndex);
+
+          updateLayersUI();
+          updatePreviewCanvas();
+        }
+
+        // Apply gallery customizations
+        if (properties.galleryItems && properties.galleryItems.length === state.galleryItems.length) {
+          properties.galleryItems.forEach((savedItem, index) => {
+            if (state.galleryItems[index]) {
+              state.galleryItems[index].customLayerOrder = savedItem.customLayerOrder;
+            }
+          });
+          refreshGalleryDisplay();
+        }
+
+        // Apply 1/1 customizations
+        if (properties.oneOfOneItems) {
+          state.oneOfOneItems.clear();
+          properties.oneOfOneItems.forEach(item => {
+            state.oneOfOneItems.set(item.index, { customTraits: item.customTraits });
+          });
+        }
+
+        alert('Properties loaded successfully!');
+      } catch (error) {
+        alert(`Failed to load properties: ${error.message}`);
+      }
+    };
+
+    // Optimized download with streaming and chunking
+    const downloadNFTs = async () => {
+      if (state.isDownloadingNFTs) return;
+      state.isDownloadingNFTs = true;
+      const downloadButton = document.getElementById('downloadNFTsButton');
+      const progressContainer = document.getElementById('nftProgress');
+      const progressBar = document.getElementById('nftProgressBar');
+      const progressText = document.getElementById('nftProgressText');
+      const cancelButton = document.getElementById('cancelNFTButton');
+      const spinner = document.getElementById('nftSpinner');
+      downloadButton.disabled = true;
+      downloadButton.textContent = 'Downloading...';
+      progressContainer.classList.add('show');
+      cancelButton.style.display = 'block';
+      spinner.classList.add('show');
+
+      try {
+        if (!state.galleryItems.length) throw new Error('No NFTs to download.');
+
+        const title = document.getElementById('metadataTitle').value.trim() || 'Super NFT';
+        const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
+
+        // Cache DOM queries for metadata (optimization for large collections)
+        const metadataTitle = document.getElementById('metadataTitle').value.trim() || 'Super NFT';
+        const metadataDescription = document.getElementById('metadataDescription').value.trim() || 'A unique NFT from the Super NFT Generator collection';
+        const ipfsCID = document.getElementById('ipfsCID').value.trim();
+        const includeIPFS = document.getElementById('includeIPFS').checked;
+
+        // Helper function to convert base64 to Blob for better memory efficiency
+        const base64ToBlob = (base64) => {
+          const byteCharacters = atob(base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          return new Blob([byteArray], { type: 'image/png' });
+        };
+
+        // Optimized metadata creation without DOM queries
+        const createMetadataOptimized = (id, combination) => {
+          const attributes = Object.entries(combination).filter(([_, trait]) => trait).map(([layer, trait]) => ({
+            trait_type: layer,
+            value: trait
+          }));
+          const oneOfOneData = state.oneOfOneItems.get(id - 1);
+          if (oneOfOneData) {
+            oneOfOneData.customTraits.forEach(trait => {
+              if (trait.layerName && trait.traitName) {
+                attributes.push({
+                  trait_type: trait.layerName,
+                  value: trait.traitName
+                });
+              }
+            });
+          }
+          return {
+            name: oneOfOneData ? `1/1 NFT #${id}` : `${metadataTitle} #${id}`,
+            description: metadataDescription,
+            image: includeIPFS && ipfsCID ? `ipfs://${ipfsCID}/${id}.png` : `${id}.png`,
+            attributes
+          };
+        };
+
+        // For very large collections, split into multiple zip files to avoid memory issues
+        const itemsPerBatch = 250;
+        const totalItems = state.galleryItems.length;
+        const needsBatching = totalItems > 250;
+        const numBatches = needsBatching ? Math.ceil(totalItems / itemsPerBatch) : 1;
+
+        if (needsBatching) {
+          progressText.textContent = `Will create ${numBatches} zip files...`;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        for (let batchNum = 0; batchNum < numBatches; batchNum++) {
+          if (!state.isDownloadingNFTs) throw new Error('Download cancelled');
+
+          const zip = new JSZip();
+          const batchStart = batchNum * itemsPerBatch;
+          const batchEnd = Math.min(batchStart + itemsPerBatch, totalItems);
+          const batchItems = state.galleryItems.slice(batchStart, batchEnd);
+
+          progressText.textContent = needsBatching
+            ? `Batch ${batchNum + 1}/${numBatches}: Adding files...`
+            : 'Adding files...';
+
+          // Process items in smaller chunks with yields
+          const chunkSize = 20;
+
+          for (let i = 0; i < batchItems.length; i += chunkSize) {
+            if (!state.isDownloadingNFTs) throw new Error('Download cancelled');
+
+            const chunkEnd = Math.min(i + chunkSize, batchItems.length);
+
+            for (let j = i; j < chunkEnd; j++) {
+              const item = batchItems[j];
+              const actualId = batchStart + j + 1;
+              const metadata = createMetadataOptimized(actualId, item.combination);
+
+              // Convert base64 to Blob for better memory efficiency
+              const base64Data = item.dataUrl.split(',')[1];
+              const imageBlob = base64ToBlob(base64Data);
+
+              zip.file(`${actualId}.png`, imageBlob);
+              zip.file(`${actualId}.json`, JSON.stringify(metadata, null, 2));
+            }
+
+            // Update progress across all batches
+            const totalProcessed = batchStart + chunkEnd;
+            const overallProgress = (totalProcessed / totalItems) * 100;
+            progressBar.style.width = `${overallProgress}%`;
+
+            if (needsBatching) {
+              progressText.textContent = `Batch ${batchNum + 1}/${numBatches}: ${Math.round((chunkEnd / batchItems.length) * 100)}%`;
+            } else {
+              progressText.textContent = `Adding files: ${Math.round(overallProgress)}%`;
+            }
+
+            // Yield to browser to allow garbage collection
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+
+          // Generate this batch's zip file
+          progressText.textContent = needsBatching
+            ? `Batch ${batchNum + 1}/${numBatches}: Finalizing...`
+            : 'Finalizing...';
+
+          const content = await zip.generateAsync({
+            type: 'blob',
+            compression: 'STORE',  // No compression for PNGs
+            streamFiles: true
+          }, (metadata) => {
+            const percent = metadata.percent.toFixed(0);
+            const batchProgress = (batchStart / totalItems) * 100 + (percent / numBatches);
+            progressBar.style.width = `${batchProgress}%`;
+          });
+
+          // Download this batch
+          const filename = needsBatching
+            ? `${sanitizedTitle}_NFTs_Part${batchNum + 1}_of_${numBatches}.zip`
+            : `${sanitizedTitle}_NFTs.zip`;
+
+          saveAs(content, filename);
+
+          // Wait for user to confirm before proceeding to next batch
+          if (batchNum < numBatches - 1) {
+            // Show confirmation dialog and wait for user response
+            progressText.textContent = `Part ${batchNum + 1} downloaded.`;
+
+            await new Promise(resolve => {
+              // Create a temporary button for user to click when ready
+              const continueBtn = document.createElement('button');
+              continueBtn.textContent = `Download Part ${batchNum + 2} of ${numBatches}`;
+              continueBtn.style.cssText = `
+                margin: 10px auto;
+                display: block;
+                padding: 10px 20px;
+                background: var(--primary-color);
+                color: var(--bg-dark);
+                border: 2px solid var(--primary-color);
+                border-radius: 5px;
+                cursor: pointer;
+                font-family: 'JetBrains Mono', monospace;
+                font-weight: bold;
+                font-size: 14px;
+                box-shadow: 0 0 10px var(--glow-color);
+                transition: all 0.3s;
+              `;
+              continueBtn.onmouseover = () => {
+                continueBtn.style.background = 'transparent';
+                continueBtn.style.color = 'var(--primary-color)';
+              };
+              continueBtn.onmouseout = () => {
+                continueBtn.style.background = 'var(--primary-color)';
+                continueBtn.style.color = 'var(--bg-dark)';
+              };
+              continueBtn.onclick = () => {
+                continueBtn.remove();
+                resolve();
+              };
+              progressContainer.appendChild(continueBtn);
+            });
+          }
+        }
+
+        if (needsBatching) {
+          progressText.textContent = `Complete! Downloaded ${numBatches} files`;
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+      } catch (error) {
+        alert(`Failed to download NFTs: ${error.message}`);
+      } finally {
+        state.isDownloadingNFTs = false;
+        downloadButton.disabled = false;
+        downloadButton.textContent = 'Download NFTs';
+        progressContainer.classList.remove('show');
+        cancelButton.style.display = 'none';
+        spinner.classList.remove('show');
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+      }
+    };
+
+    const showNFTModal = async (index) => {
+      state.currentModalIndex = index;
+      const item = state.galleryItems[index];
+      if (!item) return;
+      const modal = document.getElementById('nftModal');
+      const modalImage = document.getElementById('modalImage');
+      const modalTraitList = document.getElementById('modalTraitList');
+      const modalTraitEditor = document.getElementById('modalTraitEditor');
+      const modalCounter = document.getElementById('modalCounter');
+      const nftName = document.getElementById('nftName');
+      const title = document.getElementById('metadataTitle').value.trim() || 'Super NFT';
+      const oneOfOneData = state.oneOfOneItems.get(index);
+
+      modalImage.classList.add('fade');
+      modalImage.src = item.dataUrl;
+      setTimeout(() => modalImage.classList.remove('fade'), 300);
+
+      nftName.textContent = oneOfOneData ? `1/1 NFT #${index + 1}` : `${title} #${index + 1}`;
+      modalCounter.textContent = `${index + 1}/${state.galleryItems.length}`;
+
+      // Combined Layer/Trait Editor
+      const combinedLayerList = document.getElementById('combinedLayerList');
+      const customLayerOrder = item.customLayerOrder || [...state.layers].sort((a, b) => a.zIndex - b.zIndex).map(l => l.name).reverse();
+
+      combinedLayerList.innerHTML = customLayerOrder.map((layerName, idx) => {
+        const layer = state.layers.find(l => l.name === layerName);
+        if (!layer) return '';
+        return `
+          <div class="combined-layer-item" draggable="true" data-layer-index="${idx}" data-layer-name="${layerName}">
+            <div class="combined-layer-header">
+              <span class="combined-layer-name">${layerName}</span>
+              <span class="combined-layer-drag-handle">⋮⋮</span>
+            </div>
+            <select class="combined-layer-select" data-layer="${layerName}" ${oneOfOneData ? 'disabled' : ''}>
+              <option value="">None</option>
+              ${layer.traits.map(trait => `
+                <option value="${trait.name}" ${item.combination[layerName] === trait.name ? 'selected' : ''}>
+                  ${trait.name}
+                </option>
+              `).join('')}
+            </select>
+          </div>
+        `;
+      }).join('');
+
+      const customTraitsSection = document.getElementById('customTraitsSection');
+      const customTraitList = document.getElementById('customTraitList');
+      customTraitsSection.style.display = oneOfOneData ? 'block' : 'none';
+      if (oneOfOneData) {
+        customTraitList.innerHTML = oneOfOneData.customTraits.map((trait, tIndex) => `
+          <div class="custom-trait-item">
+            <input type="text" class="custom-layer-name" value="${trait.layerName}" placeholder="Layer Name" data-index="${tIndex}">
+            <input type="text" class="custom-trait-name" value="${trait.traitName}" placeholder="Trait Name" data-index="${tIndex}">
+            <button class="delete-custom-trait" data-index="${tIndex}">🗑️</button>
+          </div>
+        `).join('');
+      } else {
+        customTraitList.innerHTML = '';
+      }
+
+      modal.style.display = 'flex';
+    };
+
+    const closeNFTModal = () => {
+      document.getElementById('nftModal').style.display = 'none';
+    };
+
+    const moveLayerInModal = (direction) => {
+      const item = state.galleryItems[state.currentModalIndex];
+      if (!item) return;
+
+      const customLayerOrder = item.customLayerOrder || [...state.layers].sort((a, b) => a.zIndex - b.zIndex).map(l => l.name).reverse();
+
+      return (index) => {
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === customLayerOrder.length - 1) return;
+
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        [customLayerOrder[index], customLayerOrder[newIndex]] = [customLayerOrder[newIndex], customLayerOrder[index]];
+
+        item.customLayerOrder = customLayerOrder;
+        updateModalLayerOrder();
+        updateModalNFTWithLayerOrder();
+      };
+    };
+
+    const updateModalLayerOrder = () => {
+      const item = state.galleryItems[state.currentModalIndex];
+      if (!item) return;
+
+      const modalLayerOrderList = document.getElementById('modalLayerOrderList');
+      const customLayerOrder = item.customLayerOrder || [...state.layers].sort((a, b) => a.zIndex - b.zIndex).map(l => l.name).reverse();
+
+      modalLayerOrderList.innerHTML = customLayerOrder.map((layerName, idx) => {
+        const layer = state.layers.find(l => l.name === layerName);
+        if (!layer) return '';
+        return `
+          <div class="layer-order-item" draggable="true" data-layer-index="${idx}" data-layer-name="${layerName}">
+            <span>${layerName}</span>
+            <div class="layer-order-arrows">
+              <button class="move-layer-up" data-layer-index="${idx}" ${idx === 0 ? 'disabled' : ''}>▲</button>
+              <button class="move-layer-down" data-layer-index="${idx}" ${idx === customLayerOrder.length - 1 ? 'disabled' : ''}>▼</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    const updateModalNFTWithLayerOrder = async () => {
+      const item = state.galleryItems[state.currentModalIndex];
+      if (!item) return;
+
+      const thumbnailData = await renderCombinationWithOrder(item.combination, item.customLayerOrder, true);
+      const fullData = await renderCombinationWithOrder(item.combination, item.customLayerOrder, false);
+
+      item.dataUrl = fullData;
+      item.thumbnail = thumbnailData;
+
+      const galleryItem = document.querySelector(`.gallery-item[data-index="${state.currentModalIndex}"]`);
+      if (galleryItem) {
+        galleryItem.querySelector('img').src = thumbnailData;
+      }
+
+      const modalImage = document.getElementById('modalImage');
+      modalImage.classList.add('fade');
+      modalImage.src = fullData;
+      setTimeout(() => modalImage.classList.remove('fade'), 300);
+    };
+
+    const renderCombinationWithOrder = async (combination, customLayerOrder, thumbnail = false) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = thumbnail ? Math.min(state.canvasWidth, 200) : state.canvasWidth;
+      canvas.height = thumbnail ? Math.min(state.canvasHeight, 200) : state.canvasHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const scale = thumbnail ? Math.min(200 / state.canvasWidth, 200 / state.canvasHeight) : 1;
+
+      // Use custom layer order if provided, otherwise use default zIndex sorting
+      // customLayerOrder is in top-to-bottom display order, so we need to reverse it for rendering (bottom-to-top)
+      let layersToRender;
+      if (customLayerOrder && customLayerOrder.length > 0) {
+        layersToRender = [...customLayerOrder].reverse().map(name => state.layers.find(l => l.name === name)).filter(l => l);
+      } else {
+        layersToRender = [...state.layers].sort((a, b) => a.zIndex - b.zIndex);
+      }
+
+      for (const layer of layersToRender) {
+        const traitName = combination[layer.name];
+        if (!traitName) continue;
+        const trait = layer.traits.find(t => t.name === traitName);
+        if (!trait || !trait.image) continue;
+        const x = (trait.x || 0) * scale;
+        const y = (trait.y || 0) * scale;
+        const traitScale = trait.scale || 1;
+        const w = trait.image.width * traitScale * scale;
+        const h = trait.image.height * traitScale * scale;
+        const mode = trait.blendMode || 'Normal';
+        if (blendModeMap[mode]) {
+          ctx.globalCompositeOperation = blendModeMap[mode];
+          ctx.drawImage(trait.image, x, y, w, h);
+          ctx.globalCompositeOperation = 'source-over';
+        } else {
+          await customBlend(ctx, trait.image, mode, x, y, w, h);
+        }
+      }
+      return canvas.toDataURL('image/png');
+    };
+
+    const navigateModal = (direction) => {
+      const newIndex = state.currentModalIndex + direction;
+      if (newIndex >= 0 && newIndex < state.galleryItems.length) {
+        showNFTModal(newIndex);
+      }
+    };
+
+    const updateModalNFT = async () => {
+      const item = state.galleryItems[state.currentModalIndex];
+      if (!item) return;
+      const selects = document.querySelectorAll('.combined-layer-select');
+      const newCombination = {};
+      selects.forEach(select => {
+        newCombination[select.dataset.layer] = select.value;
+      });
+      const combinationKey = JSON.stringify(newCombination);
+      const duplicate = state.galleryItems.some((g, i) => i !== state.currentModalIndex && JSON.stringify(g.combination) === combinationKey);
+      const warning = document.getElementById('duplicateWarning');
+      if (duplicate) {
+        warning.classList.add('show');
+      } else {
+        warning.classList.remove('show');
+        item.combination = newCombination;
+        const thumbnailData = await renderCombination(newCombination, true);
+        const fullData = await renderCombination(newCombination, false);
+        item.dataUrl = fullData;
+        item.thumbnail = thumbnailData;
+        const galleryItem = document.querySelector(`.gallery-item[data-index="${state.currentModalIndex}"]`);
+        if (galleryItem) {
+          galleryItem.querySelector('img').src = thumbnailData;
+        }
+        const modalImage = document.getElementById('modalImage');
+        modalImage.classList.add('fade');
+        modalImage.src = fullData;
+        setTimeout(() => modalImage.classList.remove('fade'), 300);
+      }
+    };
+
+    const downloadSingleNFT = () => {
+      const item = state.galleryItems[state.currentModalIndex];
+      if (!item) return;
+      const link = document.createElement('a');
+      link.href = item.dataUrl;
+      link.download = `NFT_${state.currentModalIndex + 1}.png`;
+      link.click();
+    };
+
+    const replaceWithOneOfOne = () => {
+      const index = state.currentModalIndex;
+      if (state.oneOfOneItems.has(index)) {
+        if (!confirm('This is already a 1/1 NFT. Do you want to reset it?')) return;
+        state.oneOfOneItems.delete(index);
+      } else {
+        state.oneOfOneItems.set(index, { customTraits: [] });
+      }
+      showNFTModal(index);
+    };
+
+    const addCustomTrait = () => {
+      const index = state.currentModalIndex;
+      const oneOfOneData = state.oneOfOneItems.get(index);
+      if (!oneOfOneData) return;
+      oneOfOneData.customTraits.push({ layerName: '', traitName: '' });
+      showNFTModal(index);
+    };
+
+    const deleteCustomTrait = (traitIndex) => {
+      const index = state.currentModalIndex;
+      const oneOfOneData = state.oneOfOneItems.get(index);
+      if (!oneOfOneData) return;
+      oneOfOneData.customTraits.splice(traitIndex, 1);
+      showNFTModal(index);
+    };
+
+    const updateCustomTrait = (traitIndex, field, value) => {
+      const index = state.currentModalIndex;
+      const oneOfOneData = state.oneOfOneItems.get(index);
+      if (!oneOfOneData) return;
+      oneOfOneData.customTraits[traitIndex][field] = value;
+    };
+
+    // Gallery Filter Functions
+    const initializeGalleryFilters = () => {
+      const filterTraitGroups = document.getElementById('filterTraitGroups');
+      const galleryFiltersSection = document.getElementById('galleryFiltersSection');
+
+      // Collect all trait data
+      const traitData = {};
+      state.galleryItems.forEach(item => {
+        Object.entries(item.combination).forEach(([layer, trait]) => {
+          if (trait) {
+            if (!traitData[layer]) traitData[layer] = {};
+            traitData[layer][trait] = (traitData[layer][trait] || 0) + 1;
+          }
+        });
+      });
+
+      // Build filter UI
+      let html = '';
+      Object.keys(traitData).sort().forEach(layer => {
+        const traits = traitData[layer];
+        const sortedTraits = Object.entries(traits).sort(([a], [b]) => a.localeCompare(b));
+
+        html += `
+          <div class="filter-trait-group">
+            <div class="filter-trait-label">${layer}</div>
+            <div class="filter-trait-tags">
+              ${sortedTraits.map(([trait, count]) => `
+                <div class="filter-tag" data-layer="${layer}" data-trait="${trait}">
+                  ${trait}<span class="count">(${count})</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      filterTraitGroups.innerHTML = html;
+      galleryFiltersSection.style.display = 'block';
+      updateGalleryStats();
+    };
+
+    const activeFilters = new Set();
+
+    const applyGalleryFilters = () => {
+      const galleryGrid = document.getElementById('galleryGrid');
+      const galleryItems = galleryGrid.querySelectorAll('.gallery-item');
+
+      let visibleCount = 0;
+      galleryItems.forEach((item, index) => {
+        const nftData = state.galleryItems[index];
+        if (!nftData) return;
+
+        let shouldShow = true;
+
+        if (activeFilters.size > 0) {
+          // Group filters by layer
+          const filtersByLayer = {};
+          activeFilters.forEach(filterKey => {
+            const [layer, trait] = filterKey.split('::');
+            if (!filtersByLayer[layer]) filtersByLayer[layer] = [];
+            filtersByLayer[layer].push(trait);
+          });
+
+          // Check if NFT matches any trait in each filtered layer (OR within layer, AND across layers)
+          for (const [layer, traits] of Object.entries(filtersByLayer)) {
+            const nftTrait = nftData.combination[layer];
+            if (!traits.includes(nftTrait)) {
+              shouldShow = false;
+              break;
+            }
+          }
+        }
+
+        item.style.display = shouldShow ? '' : 'none';
+        if (shouldShow) visibleCount++;
+      });
+
+      updateGalleryStats(visibleCount);
+    };
+
+    const updateGalleryStats = (visibleCount = null) => {
+      const statsEl = document.getElementById('galleryStats');
+      const total = state.galleryItems.length;
+      const showing = visibleCount !== null ? visibleCount : total;
+
+      if (activeFilters.size > 0) {
+        statsEl.textContent = `Showing ${showing} of ${total} NFTs`;
+      } else {
+        statsEl.textContent = `${total} NFTs`;
+      }
+    };
+
+    const clearAllFilters = () => {
+      activeFilters.clear();
+      document.querySelectorAll('.filter-tag.active').forEach(tag => {
+        tag.classList.remove('active');
+      });
+      applyGalleryFilters();
+    };
+
+    // Drag and Drop Functions for Gallery
+    let draggedGalleryItem = null;
+    let draggedGalleryIndex = null;
+
+    const handleGalleryDragStart = (e) => {
+      const item = e.target.closest('.gallery-item');
+      if (!item) return;
+
+      draggedGalleryItem = item;
+      draggedGalleryIndex = parseInt(item.dataset.index);
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', item.innerHTML);
+    };
+
+    const handleGalleryDragOver = (e) => {
+      e.preventDefault();
+      const item = e.target.closest('.gallery-item');
+      if (item && item !== draggedGalleryItem) {
+        item.classList.add('drag-over');
+      }
+      return false;
+    };
+
+    const handleGalleryDragLeave = (e) => {
+      const item = e.target.closest('.gallery-item');
+      if (item) {
+        item.classList.remove('drag-over');
+      }
+    };
+
+    const handleGalleryDrop = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      const targetItem = e.target.closest('.gallery-item');
+      if (!targetItem || targetItem === draggedGalleryItem) return;
+
+      const targetIndex = parseInt(targetItem.dataset.index);
+
+      // Swap items in state array
+      const temp = state.galleryItems[draggedGalleryIndex];
+      state.galleryItems[draggedGalleryIndex] = state.galleryItems[targetIndex];
+      state.galleryItems[targetIndex] = temp;
+
+      // Update visual order
+      refreshGalleryDisplay();
+
+      return false;
+    };
+
+    const handleGalleryDragEnd = (e) => {
+      const item = e.target.closest('.gallery-item');
+      if (item) {
+        item.classList.remove('dragging');
+      }
+      document.querySelectorAll('.gallery-item').forEach(el => {
+        el.classList.remove('drag-over');
+      });
+    };
+
+    const refreshGalleryDisplay = () => {
+      const galleryGrid = document.getElementById('galleryGrid');
+      galleryGrid.innerHTML = '';
+
+      state.galleryItems.forEach((item, index) => {
+        const galleryItem = document.createElement('div');
+        galleryItem.className = 'gallery-item';
+        galleryItem.dataset.index = index;
+        galleryItem.draggable = true;
+        galleryItem.innerHTML = `
+          <div class="gallery-item-number">#${index + 1}</div>
+          <img src="${item.thumbnail}" alt="NFT ${index + 1}">
+        `;
+        galleryGrid.appendChild(galleryItem);
+      });
+
+      // Reapply filters if any
+      if (activeFilters.size > 0) {
+        applyGalleryFilters();
+      }
+    };
+
+    const updateGalleryWithNewWeights = async (layerName, traitName, newWeight) => {
+      // Find all NFTs that have this trait
+      const nftsWithTrait = [];
+      state.galleryItems.forEach((item, index) => {
+        if (item.combination[layerName] === traitName) {
+          nftsWithTrait.push(index);
+        }
+      });
+
+      if (nftsWithTrait.length === 0) return;
+
+      // Get the layer and all its other traits
+      const layer = state.layers.find(l => l.name === layerName);
+      if (!layer) return;
+
+      const otherTraits = layer.traits.filter(t => t.name !== traitName);
+      if (otherTraits.length === 0) return; // No alternatives available
+
+      // Calculate how many NFTs to change (somewhat random)
+      // Higher weight = keep more, lower weight = change more
+      const totalTraits = state.galleryItems.filter(item => item.combination[layerName] && item.combination[layerName] !== '').length;
+      const totalWeight = layer.traits.reduce((sum, t) => sum + t.weight, 0);
+      const expectedCount = Math.round((newWeight / totalWeight) * totalTraits);
+
+      // Determine how many to keep vs change
+      const currentCount = nftsWithTrait.length;
+      let changeCount = currentCount - expectedCount;
+
+      if (changeCount > 0) {
+        // Need to reduce this trait - randomly select some to change
+        const shuffled = [...nftsWithTrait].sort(() => Math.random() - 0.5);
+        const toChange = shuffled.slice(0, changeCount);
+
+        for (const index of toChange) {
+          // Pick a random alternative trait based on weights
+          const totalOtherWeight = otherTraits.reduce((sum, t) => sum + t.weight, 0);
+          let random = Math.random() * totalOtherWeight;
+          let newTrait = otherTraits[0].name;
+
+          for (const trait of otherTraits) {
+            random -= trait.weight;
+            if (random <= 0) {
+              newTrait = trait.name;
+              break;
+            }
+          }
+
+          // Update the combination
+          state.galleryItems[index].combination[layerName] = newTrait;
+
+          // Apply exclusion rules to ensure validity
+          applyExclusionRules(state.galleryItems[index].combination);
+
+          // Re-render the thumbnail
+          state.galleryItems[index].thumbnail = await renderCombination(state.galleryItems[index].combination, true);
+        }
+      } else if (changeCount < 0) {
+        // Need to increase this trait - find NFTs with other traits and change some to this trait
+        const nftsWithOtherTraits = [];
+        state.galleryItems.forEach((item, index) => {
+          if (item.combination[layerName] && item.combination[layerName] !== '' && item.combination[layerName] !== traitName) {
+            nftsWithOtherTraits.push(index);
+          }
+        });
+
+        if (nftsWithOtherTraits.length > 0) {
+          const addCount = Math.min(Math.abs(changeCount), nftsWithOtherTraits.length);
+          const shuffled = [...nftsWithOtherTraits].sort(() => Math.random() - 0.5);
+          const toChange = shuffled.slice(0, addCount);
+
+          for (const index of toChange) {
+            // Change to the target trait
+            state.galleryItems[index].combination[layerName] = traitName;
+
+            // Apply exclusion rules to ensure validity
+            applyExclusionRules(state.galleryItems[index].combination);
+
+            // Re-render the thumbnail
+            state.galleryItems[index].thumbnail = await renderCombination(state.galleryItems[index].combination, true);
+          }
+        }
+      }
+
+      // Refresh the gallery display
+      refreshGalleryDisplay();
+
+      // Update filter UI if visible
+      if (document.getElementById('galleryFiltersSection').style.display !== 'none') {
+        initializeGalleryFilters();
+        // Reapply active filters
+        if (activeFilters.size > 0) {
+          applyGalleryFilters();
+        }
+      }
+    };
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Theme rotation system
+      const themes = ['sleek', 'terminal', 'pastel'];
+      let currentThemeIndex = 0;
+
+      document.querySelector('.theme-toggle').addEventListener('click', () => {
+        // Remove all theme classes
+        document.body.classList.remove('terminal-theme', 'pastel-theme');
+
+        // Move to next theme
+        currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+
+        // Apply theme class (sleek is default, no class needed)
+        if (themes[currentThemeIndex] === 'terminal') {
+          document.body.classList.add('terminal-theme');
+        } else if (themes[currentThemeIndex] === 'pastel') {
+          document.body.classList.add('pastel-theme');
+        }
+      });
+
+      const sidebarButtons = document.querySelectorAll('.sidebar > button, .sidebar > .tooltip > button');
+      sidebarButtons[0].addEventListener('click', addLayer);
+      sidebarButtons[1].addEventListener('click', importProject);
+
+      document.getElementById('layers').addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-layer-button')) {
+          deleteLayer(parseInt(e.target.dataset.layerId));
+        } else if (e.target.classList.contains('delete-trait-button')) {
+          deleteTrait(parseInt(e.target.dataset.layerId), parseInt(e.target.dataset.traitIndex));
+        } else if (e.target.classList.contains('edit-trait-button')) {
+          editTrait(parseInt(e.target.dataset.layerId), parseInt(e.target.dataset.traitIndex));
+        } else if (e.target.closest('.layer-header') && !e.target.classList.contains('layer-name-input') && !e.target.classList.contains('delete-layer-button')) {
+          toggleTraits(e.target.closest('.layer-header'));
+        } else if (e.target.textContent === 'Add Trait') {
+          addTrait(parseInt(e.target.closest('.layer-item').dataset.id));
+        } else if (e.target.textContent === 'Add Trait Batch') {
+          addTraitBatch(parseInt(e.target.closest('.layer-item').dataset.id));
+        }
+      });
+
+      document.getElementById('layers').addEventListener('change', (e) => {
+        if (e.target.classList.contains('layer-name-input')) {
+          renameLayer(parseInt(e.target.dataset.id));
+        } else if (e.target.classList.contains('trait-name-input')) {
+          renameTrait(parseInt(e.target.dataset.layerId), parseInt(e.target.dataset.traitIndex));
+        } else if (e.target.classList.contains('trait-weight')) {
+          const layerId = parseInt(e.target.dataset.layerId);
+          const traitIndex = parseInt(e.target.dataset.traitIndex);
+          const layer = state.layers.find(l => l.id === layerId);
+          const trait = layer.traits[traitIndex];
+          const newWeight = Math.max(1, parseInt(e.target.value) || 1);
+
+          trait.weight = newWeight;
+          updateTraitRarityUI();
+
+          // Update generated NFTs if gallery exists
+          if (state.galleryItems.length > 0) {
+            updateGalleryWithNewWeights(layer.name, trait.name, newWeight);
+          }
+        } else if (e.target.classList.contains('trait-blend-mode')) {
+          const layer = state.layers.find(l => l.id === parseInt(e.target.dataset.layerId));
+          const trait = layer.traits[parseInt(e.target.dataset.traitIndex)];
+          trait.blendMode = e.target.value;
+          updatePreviewCanvas();
+        } else if (e.target.dataset.axis) {
+          const layer = state.layers.find(l => l.id === parseInt(e.target.dataset.layerId));
+          const trait = layer.traits[parseInt(e.target.dataset.traitIndex)];
+          trait[e.target.dataset.axis] = parseInt(e.target.value) || 0;
+          updatePreviewCanvas();
+        } else if (e.target.dataset.scale) {
+          const layer = state.layers.find(l => l.id === parseInt(e.target.dataset.layerId));
+          const trait = layer.traits[parseInt(e.target.dataset.traitIndex)];
+          trait.scale = parseFloat(e.target.value) || 1;
+          updatePreviewCanvas();
+        } else if (e.target.classList.contains('none-percentage-slider')) {
+          const layer = state.layers.find(l => l.id === parseInt(e.target.dataset.layerId));
+          layer.nonePercentage = parseInt(e.target.value);
+          e.target.nextElementSibling.textContent = `${layer.nonePercentage}%`;
+        }
+      });
+
+      document.getElementById('layers').addEventListener('dragstart', (e) => {
+        if (e.target.classList.contains('layer-item')) handleDragStart(e);
+      });
+
+      document.getElementById('layers').addEventListener('dragover', (e) => {
+        if (e.target.closest('#layers')) handleDragOver(e);
+      });
+
+      document.getElementById('layers').addEventListener('dragend', (e) => {
+        if (e.target.classList.contains('layer-item')) handleDragEnd(e);
+      });
+
+      // Exclusion event listeners
+      document.getElementById('addExclusionBtn').addEventListener('click', showExclusionForm);
+      document.getElementById('saveExclusionBtn').addEventListener('click', saveExclusionRule);
+      document.getElementById('cancelExclusionBtn').addEventListener('click', hideExclusionForm);
+      document.getElementById('thenActionSelect').addEventListener('change', updateTargetDropdown);
+      document.getElementById('exclusionRulesList').addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-button')) {
+          const indices = JSON.parse(e.target.dataset.ruleIndices);
+          deleteExclusionRule(indices);
+        } else if (e.target.classList.contains('edit-button')) {
+          const indices = JSON.parse(e.target.dataset.ruleIndices);
+          editExclusionRule(indices);
+        }
+      });
+
+      document.getElementById('traitRarityToggle').addEventListener('click', toggleTraitRarity);
+
+      // Rarity weight slider event listener
+      document.getElementById('traitRarity').addEventListener('input', (e) => {
+        if (e.target.classList.contains('rarity-weight-slider')) {
+          const layerIndex = parseInt(e.target.dataset.layerIndex);
+          const traitIndex = parseInt(e.target.dataset.traitIndex);
+          const newWeight = parseInt(e.target.value);
+
+          // Update the trait weight in state
+          state.layers[layerIndex].traits[traitIndex].weight = newWeight;
+
+          // Update the display value in trait rarity section
+          const display = document.querySelector(`.rarity-weight-display[data-layer-index="${layerIndex}"][data-trait-index="${traitIndex}"]`);
+          if (display) display.textContent = newWeight;
+
+          // Update the weight input field in the layer trait list
+          const layer = state.layers[layerIndex];
+          const weightInput = document.querySelector(`.trait-weight[data-layer-id="${layer.id}"][data-trait-index="${traitIndex}"]`);
+          if (weightInput) weightInput.value = newWeight;
+
+          // Update generated NFTs if gallery exists
+          if (state.galleryItems.length > 0) {
+            updateGalleryWithNewWeights(state.layers[layerIndex].name, state.layers[layerIndex].traits[traitIndex].name, newWeight);
+          }
+        }
+      });
+
+      document.getElementById('previewControls').addEventListener('change', (e) => {
+        if (e.target.tagName === 'SELECT') {
+          state.previewTraits.set(e.target.dataset.layer, e.target.value);
+          updatePreviewCanvas();
+        }
+      });
+
+      document.getElementById('previewRandomNFTButton').addEventListener('click', previewRandomNFT);
+      document.getElementById('generateGalleryButton').addEventListener('click', generateGallery);
+      document.getElementById('downloadNFTsButton').addEventListener('click', downloadNFTs);
+
+      document.getElementById('cancelGalleryButton').addEventListener('click', () => {
+        state.isGeneratingGallery = false;
+      });
+
+      document.getElementById('cancelNFTButton').addEventListener('click', () => {
+        state.isDownloadingNFTs = false;
+      });
+
+      const galleryGrid = document.getElementById('galleryGrid');
+
+      galleryGrid.addEventListener('click', (e) => {
+        const galleryItem = e.target.closest('.gallery-item');
+        if (galleryItem) {
+          showNFTModal(parseInt(galleryItem.dataset.index));
+        }
+      });
+
+      // Gallery drag and drop event listeners
+      galleryGrid.addEventListener('dragstart', handleGalleryDragStart);
+      galleryGrid.addEventListener('dragover', handleGalleryDragOver);
+      galleryGrid.addEventListener('dragleave', handleGalleryDragLeave);
+      galleryGrid.addEventListener('drop', handleGalleryDrop);
+      galleryGrid.addEventListener('dragend', handleGalleryDragEnd);
+
+      // Filter event listeners
+      document.getElementById('filterTraitGroups').addEventListener('click', (e) => {
+        const filterTag = e.target.closest('.filter-tag');
+        if (filterTag) {
+          const layer = filterTag.dataset.layer;
+          const trait = filterTag.dataset.trait;
+          const filterKey = `${layer}::${trait}`;
+
+          if (activeFilters.has(filterKey)) {
+            activeFilters.delete(filterKey);
+            filterTag.classList.remove('active');
+          } else {
+            activeFilters.add(filterKey);
+            filterTag.classList.add('active');
+          }
+
+          applyGalleryFilters();
+        }
+      });
+
+      document.getElementById('clearFiltersButton').addEventListener('click', clearAllFilters);
+
+      document.querySelector('.close-modal').addEventListener('click', closeNFTModal);
+      document.getElementById('prevButton').addEventListener('click', () => navigateModal(-1));
+      document.getElementById('nextButton').addEventListener('click', () => navigateModal(1));
+      document.getElementById('downloadNFTModalButton').addEventListener('click', downloadSingleNFT);
+      document.getElementById('replaceOneButton').addEventListener('click', replaceWithOneOfOne);
+      document.getElementById('addCustomTraitButton').addEventListener('click', addCustomTrait);
+
+      // Combined Layer/Trait Editor event listeners
+      document.getElementById('combinedLayerList').addEventListener('change', (e) => {
+        if (e.target.classList.contains('combined-layer-select')) {
+          updateModalNFT();
+        }
+      });
+
+      // Drag and drop for combined layer ordering
+      let draggedCombinedLayerIndex = null;
+
+      document.getElementById('combinedLayerList').addEventListener('dragstart', (e) => {
+        if (e.target.classList.contains('combined-layer-item')) {
+          draggedCombinedLayerIndex = parseInt(e.target.dataset.layerIndex);
+          e.target.classList.add('dragging');
+        }
+      });
+
+      document.getElementById('combinedLayerList').addEventListener('dragend', (e) => {
+        if (e.target.classList.contains('combined-layer-item')) {
+          e.target.classList.remove('dragging');
+          draggedCombinedLayerIndex = null;
+        }
+      });
+
+      document.getElementById('combinedLayerList').addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElementModal(e.clientY);
+        const draggingElement = document.querySelector('.combined-layer-item.dragging');
+        if (afterElement == null) {
+          document.getElementById('combinedLayerList').appendChild(draggingElement);
+        } else {
+          document.getElementById('combinedLayerList').insertBefore(draggingElement, afterElement);
+        }
+      });
+
+      document.getElementById('combinedLayerList').addEventListener('drop', (e) => {
+        e.preventDefault();
+        const item = state.galleryItems[state.currentModalIndex];
+        if (!item) return;
+
+        const layerElements = Array.from(document.querySelectorAll('.combined-layer-item'));
+        const newOrder = layerElements.map(el => el.dataset.layerName);
+        item.customLayerOrder = newOrder;
+
+        updateModalNFTWithLayerOrder();
+      });
+
+      const getDragAfterElementModal = (y) => {
+        const draggableElements = [...document.querySelectorAll('.combined-layer-item:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+          const box = child.getBoundingClientRect();
+          const offset = y - box.top - box.height / 2;
+          if (offset < 0 && offset > closest.offset) {
+            return { offset, element: child };
+          } else {
+            return closest;
+          }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+      };
+
+      document.getElementById('customTraitList').addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-custom-trait')) {
+          deleteCustomTrait(parseInt(e.target.dataset.index));
+        }
+      });
+
+      document.getElementById('customTraitList').addEventListener('input', (e) => {
+        if (e.target.classList.contains('custom-layer-name')) {
+          updateCustomTrait(parseInt(e.target.dataset.index), 'layerName', e.target.value);
+        } else if (e.target.classList.contains('custom-trait-name')) {
+          updateCustomTrait(parseInt(e.target.dataset.index), 'traitName', e.target.value);
+        }
+      });
+
+      document.getElementById('canvasWidth').addEventListener('change', updateCanvasDimensions);
+      document.getElementById('canvasHeight').addEventListener('change', updateCanvasDimensions);
+
+      document.getElementById('exportMetadataButton').addEventListener('click', exportNewMetadata);
+
+      // Save/Load Properties event listeners
+      document.getElementById('savePropertiesButton').addEventListener('click', saveProjectProperties);
+
+      document.getElementById('loadPropertiesButton').addEventListener('click', () => {
+        document.getElementById('loadPropertiesInput').click();
+      });
+
+      document.getElementById('loadPropertiesInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          loadProjectProperties(file);
+          // Reset input so same file can be loaded again
+          e.target.value = '';
+        }
+      });
+
+      document.getElementById('includeIPFS').addEventListener('change', (e) => {
+        document.getElementById('exportMetadataContainer').style.display = state.galleryItems.length ? 'block' : 'none';
+      });
+
+      document.getElementById('ipfsCID').addEventListener('input', () => {
+        document.getElementById('exportMetadataContainer').style.display = state.galleryItems.length ? 'block' : 'none';
+      });
+
+      let isDragging = false;
+      let lastX, lastY;
+
+      document.getElementById('previewCanvas').addEventListener('mousedown', (e) => {
+        if (!state.currentEditedTrait) return;
+        isDragging = true;
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+      });
+
+      document.getElementById('previewCanvas').addEventListener('mousemove', (e) => {
+        if (!isDragging || !state.currentEditedTrait) return;
+        const dx = e.offsetX - lastX;
+        const dy = e.offsetY - lastY;
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+        const layer = state.layers.find(l => l.id === state.currentEditedTrait.layerId);
+        const trait = layer.traits[state.currentEditedTrait.traitIndex];
+        trait.x = (trait.x || 0) + dx;
+        trait.y = (trait.y || 0) + dy;
+        updateLayersUI();
+        updatePreviewCanvas();
+      });
+
+      document.getElementById('previewCanvas').addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      document.getElementById('previewCanvas').addEventListener('mouseleave', () => {
+        isDragging = false;
+      });
+
+      document.getElementById('nftModal').addEventListener('click', (e) => {
+        if (e.target.id === 'nftModal') closeNFTModal();
+      });
+
+      // Mouse gradient effect for sleek theme
+      const mouseGradient = document.getElementById('mouseGradient');
+
+      // Initialize gradient visibility based on current theme
+      const updateMouseGradientVisibility = () => {
+        if (!document.body.classList.contains('terminal-theme') &&
+            !document.body.classList.contains('pastel-theme')) {
+          mouseGradient.style.opacity = '1';
+        } else {
+          mouseGradient.style.opacity = '0';
+        }
+      };
+
+      // Set initial state
+      updateMouseGradientVisibility();
+
+      document.addEventListener('mousemove', (e) => {
+        mouseGradient.style.left = e.clientX + 'px';
+        mouseGradient.style.top = e.clientY + 'px';
+        updateMouseGradientVisibility();
+      });
+
+      // Pink particles for pastel theme
+      const pinkParticlesContainer = document.getElementById('pinkParticles');
+
+      function createPinkParticle(x = null, y = null, fromClick = false) {
+        const particle = document.createElement('div');
+        particle.className = 'pink-particle';
+
+        const startX = x !== null ? x : Math.random() * window.innerWidth;
+        const startY = y !== null ? y : window.innerHeight + 20;
+        const drift = (Math.random() - 0.5) * 200;
+        const duration = fromClick ? 3 + Math.random() * 2 : 8 + Math.random() * 4;
+        const size = fromClick ? 6 + Math.random() * 8 : 4 + Math.random() * 6;
+        const delay = fromClick ? 0 : Math.random() * 5;
+
+        particle.style.left = startX + 'px';
+        if (fromClick) {
+          particle.style.top = startY + 'px';
+          particle.style.bottom = 'auto';
+        } else {
+          particle.style.bottom = '-20px';
+        }
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        particle.style.setProperty('--drift', drift + 'px');
+        particle.style.animationDuration = duration + 's';
+        particle.style.animationDelay = delay + 's';
+
+        pinkParticlesContainer.appendChild(particle);
+
+        setTimeout(() => {
+          particle.remove();
+        }, (duration + delay) * 1000);
+      }
+
+      // Click to create particles on pastel theme
+      document.addEventListener('click', (e) => {
+        if (document.body.classList.contains('pastel-theme')) {
+          // Create multiple particles on click
+          for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+              const offsetX = (Math.random() - 0.5) * 30;
+              const offsetY = (Math.random() - 0.5) * 30;
+              createPinkParticle(e.clientX + offsetX, e.clientY + offsetY, true);
+            }, i * 50);
+          }
+        }
+      });
+
+      // Create initial particles
+      for (let i = 0; i < 50; i++) {
+        setTimeout(() => createPinkParticle(), i * 100);
+      }
+
+      // Continuously create new particles
+      setInterval(() => {
+        if (document.body.classList.contains('pastel-theme')) {
+          createPinkParticle();
+        }
+      }, 500);
+    });
+
+    // CRT Scanlines System
+    (() => {
+      const scanlinesBackground = document.getElementById('scanlinesBackground');
+      const scanlinesOverlay = document.getElementById('scanlinesOverlay');
+      const scanlineSpacing = 8; // pixels between scanlines (increased for less frequency)
+      const scanlineHeight = 2; // height of each scanline
+      const scrollSpeed = 0.3; // pixels per frame (slower)
+
+      let backgroundScanlines = [];
+      let overlayScanlines = [];
+
+      function createScanlines() {
+        // Clear existing scanlines
+        scanlinesBackground.innerHTML = '';
+        scanlinesOverlay.innerHTML = '';
+        backgroundScanlines = [];
+        overlayScanlines = [];
+
+        const screenHeight = window.innerHeight;
+        const totalLines = Math.ceil(screenHeight / scanlineSpacing) + 10; // Extra lines for seamless scrolling
+
+        // Create background scanlines (muted)
+        for (let i = 0; i < totalLines; i++) {
+          const scanline = document.createElement('div');
+          scanline.className = 'scanline';
+          scanline.style.top = (i * scanlineSpacing - 40) + 'px'; // Start some above screen
+          scanline.style.opacity = Math.random() * 0.15; // Much lower max opacity
+          scanlinesBackground.appendChild(scanline);
+          backgroundScanlines.push({
+            element: scanline,
+            position: i * scanlineSpacing - 40,
+            opacity: Math.random() * 0.15,
+            opacityChange: (Math.random() - 0.5) * 0.001 // Subtle opacity variation
+          });
+        }
+
+        // Create overlay scanlines (very subtle)
+        for (let i = 0; i < totalLines; i++) {
+          const scanline = document.createElement('div');
+          scanline.className = 'scanline';
+          scanline.style.top = (i * scanlineSpacing - 40) + 'px';
+          const baseOpacity = Math.random() * 0.02; // Even more subtle
+          scanline.style.opacity = baseOpacity;
+          scanlinesOverlay.appendChild(scanline);
+          overlayScanlines.push({
+            element: scanline,
+            position: i * scanlineSpacing - 40,
+            opacity: baseOpacity,
+            opacityChange: (Math.random() - 0.5) * 0.0003
+          });
+        }
+      }
+
+      function animateScanlines() {
+        if (!document.body.classList.contains('terminal-theme')) {
+          requestAnimationFrame(animateScanlines);
+          return;
+        }
+
+        const screenHeight = window.innerHeight;
+
+        // Animate background scanlines
+        backgroundScanlines.forEach(line => {
+          line.position += scrollSpeed;
+
+          // Reset position when off screen
+          if (line.position > screenHeight + 20) {
+            line.position = -20;
+            line.opacity = Math.random() * 0.15; // New random opacity (muted)
+          }
+
+          // Subtle opacity variation over time
+          line.opacity += line.opacityChange;
+          if (line.opacity > 0.15) {
+            line.opacity = 0.15;
+            line.opacityChange = -Math.abs(line.opacityChange);
+          } else if (line.opacity < 0) {
+            line.opacity = 0;
+            line.opacityChange = Math.abs(line.opacityChange);
+          }
+
+          line.element.style.top = line.position + 'px';
+          line.element.style.opacity = line.opacity;
+        });
+
+        // Animate overlay scanlines
+        overlayScanlines.forEach(line => {
+          line.position += scrollSpeed;
+
+          if (line.position > screenHeight + 20) {
+            line.position = -20;
+            line.opacity = Math.random() * 0.02;
+          }
+
+          line.opacity += line.opacityChange;
+          if (line.opacity > 0.02) {
+            line.opacity = 0.02;
+            line.opacityChange = -Math.abs(line.opacityChange);
+          } else if (line.opacity < 0) {
+            line.opacity = 0;
+            line.opacityChange = Math.abs(line.opacityChange);
+          }
+
+          line.element.style.top = line.position + 'px';
+          line.element.style.opacity = line.opacity;
+        });
+
+        requestAnimationFrame(animateScanlines);
+      }
+
+      // Initialize scanlines
+      createScanlines();
+      animateScanlines();
+
+      // Recreate scanlines on window resize
+      window.addEventListener('resize', createScanlines);
+
+      // Update visibility when theme changes
+      const themeToggle = document.querySelector('.theme-toggle');
+      if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+          setTimeout(() => {
+            if (document.body.classList.contains('terminal-theme')) {
+              scanlinesBackground.style.display = 'block';
+              scanlinesOverlay.style.display = 'block';
+            } else {
+              scanlinesBackground.style.display = 'none';
+              scanlinesOverlay.style.display = 'none';
+            }
+          }, 50);
+        });
+      }
+
+      // Set initial visibility
+      if (!document.body.classList.contains('terminal-theme')) {
+        scanlinesBackground.style.display = 'none';
+        scanlinesOverlay.style.display = 'none';
+      }
+    })();
+  </script>
+</body>
+</html>
